@@ -37,7 +37,6 @@ class FreightsResource extends Resource
                     ->numeric(),
             ]);
     }
-
     public static function table(Table $table): Table
     {
         return $table
