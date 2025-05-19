@@ -495,7 +495,7 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                                 <option value="">Pilih Freight</option>
                                 {freights?.map((freight) => (
                                     <option key={freight.id} value={freight.id}>
-                                        {freight.name}
+                                        {freight.description}
                                     </option>
                                 ))}
                             </select>

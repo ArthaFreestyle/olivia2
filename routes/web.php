@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -20,9 +21,7 @@ Route::get('/abort', function () {
 })->name('abort');
 
 Route::middleware([ 'auth','Driver'])->group(function () {
-    Route::get('/driver', function () {
-        return Inertia::render('RouteSubmission');
-    })->name('driver');
+    Route::get('/driver', [DriverController::class, 'index'])->name('driver');
 });
 
 Route::get('/dashboard', function () {
