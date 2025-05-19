@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+           
         ]);
         $middleware->api(append: [
             \Illuminate\Http\Middleware\SetCacheHeaders::class,
@@ -22,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'auth.jwt' => JWTAuthMiddleware::class,
+            'Driver' => \App\Http\Middleware\Driver::class,
+            'User' => \App\Http\Middleware\User::class,
         ]);
 
         //

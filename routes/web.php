@@ -15,13 +15,19 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/driver', function () {
-    return Inertia::render('RouteSubmission');
-})->middleware(['auth', 'verified'])->name('driver');
+Route::get('/abort', function () {
+    abort(403,'You are not authorized to access this page.');
+})->name('abort');
+
+Route::middleware([ 'auth','Driver'])->group(function () {
+    Route::get('/driver', function () {
+        return Inertia::render('RouteSubmission');
+    })->name('driver');
+});
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth','User'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -34,4 +40,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/routes/{id}', [RoutesController::class, 'destroy']);
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
