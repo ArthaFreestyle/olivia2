@@ -32,6 +32,9 @@ class VehiclesResource extends Resource
                 Forms\Components\TextInput::make('capacity_kg')
                     ->required()
                     ->numeric(),
+                Forms\Components\Select::make('owner')
+                    ->relationship('owner', 'name')
+                    ->required(),
             ]);
     }
 
@@ -54,6 +57,10 @@ class VehiclesResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('owner.name')
+                    ->label('Owner')
+                    ->searchable()
+                    ->sortable(),
             ])
             ->filters([
                 //

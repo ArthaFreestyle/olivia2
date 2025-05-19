@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('plate_number');
             $table->integer('capacity_kg');
             $table->timestamps();
+            $table->foreignId('owner')->constrained('users')->onDelete('cascade');
         });
 
     }

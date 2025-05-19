@@ -21,7 +21,7 @@ class Routes extends Model
 
     public function driver(): BelongsTo
     {
-        return $this->belongsTo(Drivers::class);
+        return $this->belongsTo(User::class);
     }
 
     public function vehicle(): BelongsTo

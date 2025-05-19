@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('routes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
+            $table->foreignId('driver_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('vehicle_id')->constrained('vehicles')->onDelete('cascade');
             $table->foreignId('freight_id')->constrained('freights')->onDelete('cascade');
             $table->string('name');

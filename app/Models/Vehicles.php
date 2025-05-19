@@ -14,4 +14,8 @@ class Vehicles extends Model
     {
         return $this->hasMany(Routes::class);
     }
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner');
+    }
 }
