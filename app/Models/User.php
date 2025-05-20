@@ -56,4 +56,9 @@ class User extends Authenticatable
     {
         return [];
     }
+
+    public function vehicle()
+    {
+        return $this->hasMany(Vehicles::class, 'owner');
+    }
 }

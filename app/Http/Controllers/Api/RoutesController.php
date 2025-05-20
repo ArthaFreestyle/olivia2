@@ -14,10 +14,11 @@ class RoutesController extends Controller
         return response()->json($routes);
     }
 
-    public function store(Request $request)
-    {
+   public function store(Request $request)
+{
+    try {
         $validated = $request->validate([
-            'driver_id' => 'required|exists:drivers,id',
+            'driver_id' => 'required',
             'vehicle_id' => 'required|exists:vehicles,id',
             'freight_id' => 'required|exists:freights,id',
             'name' => 'required|string|max:255',
@@ -31,7 +32,15 @@ class RoutesController extends Controller
         $route = Routes::create($validated);
 
         return response()->json(['message' => 'Route created successfully', 'route' => $route], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Server Error',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ], 500);
     }
+}
+
 
     public function show($id)
     {

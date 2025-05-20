@@ -29,12 +29,14 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
     useEffect(() => {
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css";
+        link.href =
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css";
         document.head.appendChild(link);
 
         const iconLink = document.createElement("link");
         iconLink.rel = "stylesheet";
-        iconLink.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css";
+        iconLink.href =
+            "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css";
         document.head.appendChild(iconLink);
 
         return () => {
@@ -53,13 +55,19 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                         .map("map", { zoomControl: false })
                         .setView([-6.2, 106.816666], 13);
 
-                    L.default.control.zoom({ position: "bottomright" }).addTo(newMap);
+                    L.default.control
+                        .zoom({ position: "bottomright" })
+                        .addTo(newMap);
 
                     L.default
-                        .tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                            maxZoom: 19,
-                        })
+                        .tileLayer(
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            {
+                                attribution:
+                                    '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                                maxZoom: 19,
+                            }
+                        )
                         .addTo(newMap);
 
                     const startIcon = L.default.divIcon({
@@ -240,11 +248,21 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     const customLocateControl = L.default.Control.extend({
                         options: { position: "bottomright" },
                         onAdd: function () {
-                            const container = L.default.DomUtil.create("div", "locate-control");
-                            const btn = L.default.DomUtil.create("div", "locate-btn", container);
-                            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i>';
+                            const container = L.default.DomUtil.create(
+                                "div",
+                                "locate-control"
+                            );
+                            const btn = L.default.DomUtil.create(
+                                "div",
+                                "locate-btn",
+                                container
+                            );
+                            btn.innerHTML =
+                                '<i class="fas fa-location-crosshairs"></i>';
 
-                            L.default.DomEvent.on(btn, "click", () => locateUser(newMap, L.default));
+                            L.default.DomEvent.on(btn, "click", () =>
+                                locateUser(newMap, L.default)
+                            );
 
                             return container;
                         },
@@ -289,7 +307,9 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     setLocatingUser(false);
                     if (locateBtn) {
                         locateBtn.classList.remove("locate-btn-active");
-                        locateBtn.removeChild(locateBtn.querySelector(".pulsing-circle"));
+                        locateBtn.removeChild(
+                            locateBtn.querySelector(".pulsing-circle")
+                        );
                     }
                 },
                 (err) => {
@@ -297,7 +317,9 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     setLocatingUser(false);
                     if (locateBtn) {
                         locateBtn.classList.remove("locate-btn-active");
-                        locateBtn.removeChild(locateBtn.querySelector(".pulsing-circle"));
+                        locateBtn.removeChild(
+                            locateBtn.querySelector(".pulsing-circle")
+                        );
                     }
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
@@ -307,7 +329,9 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             setLocatingUser(false);
             if (locateBtn) {
                 locateBtn.classList.remove("locate-btn-active");
-                locateBtn.removeChild(locateBtn.querySelector(".pulsing-circle"));
+                locateBtn.removeChild(
+                    locateBtn.querySelector(".pulsing-circle")
+                );
             }
         }
     };
@@ -334,22 +358,31 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             );
             if (!response.ok) throw new Error("Gagal mengambil rute");
             const data = await response.json();
-            if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
+            if (
+                data.code !== "Ok" ||
+                !data.routes ||
+                data.routes.length === 0
+            ) {
                 throw new Error("Rute tidak ditemukan");
             }
             const routeData = data.routes[0];
             const routeGeometry = routeData.geometry;
 
             if (route) {
-                if (route.main && mapInstance.hasLayer(route.main)) mapInstance.removeLayer(route.main);
-                if (route.animated && mapInstance.hasLayer(route.animated)) mapInstance.removeLayer(route.animated);
+                if (route.main && mapInstance.hasLayer(route.main))
+                    mapInstance.removeLayer(route.main);
+                if (route.animated && mapInstance.hasLayer(route.animated))
+                    mapInstance.removeLayer(route.animated);
             }
 
             const newRoute = L.geoJSON(routeGeometry, {
                 style: { color: "#3366FF", weight: 6, opacity: 0.7 },
             }).addTo(mapInstance);
 
-            const coordinates = routeGeometry.coordinates.map((coord) => [coord[1], coord[0]]);
+            const coordinates = routeGeometry.coordinates.map((coord) => [
+                coord[1],
+                coord[0],
+            ]);
             const animatedRoute = L.polyline(coordinates, {
                 color: "#1e40af",
                 weight: 3,
@@ -379,7 +412,8 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
 
     const resetMap = () => {
         if (mapRef.current) {
-            if (startPoint?.marker) mapRef.current.removeLayer(startPoint.marker);
+            if (startPoint?.marker)
+                mapRef.current.removeLayer(startPoint.marker);
             if (endPoint?.marker) mapRef.current.removeLayer(endPoint.marker);
             if (route?.main) mapRef.current.removeLayer(route.main);
             if (route?.animated) mapRef.current.removeLayer(route.animated);
@@ -392,7 +426,12 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             setGeometry(null);
             setError(null);
             setFormError(null);
-            setFormData({ name: "", weight: "", weight_name: "", freight_id: "" });
+            setFormData({
+                name: "",
+                weight: "",
+                weight_name: "",
+                freight_id: "",
+            });
             clickStage.current = 0;
             mapRef.current.setView([-6.2, 106.816666], 13);
         }
@@ -406,10 +445,11 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             setError("Rute belum lengkap. Pilih titik awal dan akhir.");
             return;
         }
+        console.log(driver);
 
         const payload = {
             driver_id: driver.id,
-            vehicle_id: vehicles[0]?.id, // Ensure a vehicle is available
+            vehicle_id: driver.vehicle[0].id, // Ensure a vehicle is available
             freight_id: formData.freight_id,
             name: formData.name,
             distance: parseFloat(distance),
@@ -420,6 +460,15 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
         };
 
         try {
+            console.log("Payload:", payload);
+            axios.defaults.headers.common["X-Requested-With"] =
+                "XMLHttpRequest";
+            const token = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content");
+            if (token) {
+                axios.defaults.headers.common["X-CSRF-TOKEN"] = token;
+            }
             const response = await axios.post("/routes", payload);
             alert(response.data.message);
             resetMap();
@@ -427,7 +476,8 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             if (err.response?.status === 422) {
                 setFormError(err.response.data.errors);
             } else {
-                setError("Gagal menyimpan rute: " + err.message);
+               
+                setError("Gagal menyimpan rute: " + err.response.data);
             }
         }
     };
@@ -452,11 +502,17 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     </div>
                     <div className="flex items-center">
                         <button
-                            onClick={() => locateUser(mapRef.current, leafletRef.current)}
+                            onClick={() =>
+                                locateUser(mapRef.current, leafletRef.current)
+                            }
                             className="bg-white text-blue-600 px-4 py-2 rounded-lg shadow mr-2"
                             disabled={locatingUser}
                         >
-                            <i className={`fas fa-location-crosshairs mr-2 ${locatingUser ? "animate-pulse" : ""}`}></i>
+                            <i
+                                className={`fas fa-location-crosshairs mr-2 ${
+                                    locatingUser ? "animate-pulse" : ""
+                                }`}
+                            ></i>
                             {locatingUser ? "Mencari..." : "Lokasi Saya"}
                         </button>
                         <button
@@ -469,26 +525,50 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     </div>
                 </div>
 
-                <div className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 w-96 p-5 shadow-xl border-l border-gray-200 sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
-                    <h3 className="font-bold text-lg text-gray-800 mb-4">Submit Rute</h3>
+                <div
+                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 w-96 p-5 shadow-xl border-l border-gray-200 sidebar ${
+                        sidebarOpen ? "sidebar-open" : "sidebar-closed"
+                    }`}
+                >
+                    <h3 className="font-bold text-lg text-gray-800 mb-4">
+                        Submit Rute
+                    </h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Nama Rute</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Nama Rute
+                            </label>
                             <input
                                 type="text"
                                 value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        name: e.target.value,
+                                    })
+                                }
                                 className="input-field"
                                 required
                             />
-                            {formError?.name && <div className="error-text">{formError.name[0]}</div>}
+                            {formError?.name && (
+                                <div className="error-text">
+                                    {formError.name[0]}
+                                </div>
+                            )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Freight</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Freight
+                            </label>
                             <select
                                 value={formData.freight_id}
-                                onChange={(e) => setFormData({ ...formData, freight_id: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        freight_id: e.target.value,
+                                    })
+                                }
                                 className="input-field"
                                 required
                             >
@@ -499,51 +579,91 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                                     </option>
                                 ))}
                             </select>
-                            {formError?.freight_id && <div className="error-text">{formError.freight_id[0]}</div>}
+                            {formError?.freight_id && (
+                                <div className="error-text">
+                                    {formError.freight_id[0]}
+                                </div>
+                            )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Berat (ton)</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Berat
+                            </label>
                             <input
                                 type="number"
                                 step="0.01"
                                 value={formData.weight}
-                                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        weight: e.target.value,
+                                    })
+                                }
                                 className="input-field"
                                 required
                             />
-                            {formError?.weight && <div className="error-text">{formError.weight[0]}</div>}
+                            {formError?.weight && (
+                                <div className="error-text">
+                                    {formError.weight[0]}
+                                </div>
+                            )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Nama Berat</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Nama Satuan Berat
+                            </label>
                             <input
                                 type="text"
                                 value={formData.weight_name}
-                                onChange={(e) => setFormData({ ...formData, weight_name: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        weight_name: e.target.value,
+                                    })
+                                }
                                 className="input-field"
                                 required
                             />
-                            {formError?.weight_name && <div className="error-text">{formError.weight_name[0]}</div>}
+                            {formError?.weight_name && (
+                                <div className="error-text">
+                                    {formError.weight_name[0]}
+                                </div>
+                            )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Titik Pengambilan</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Titik Pengambilan
+                            </label>
                             <div className="text-sm">
-                                {startPoint ? `${startPoint.lat.toFixed(5)}, ${startPoint.lng.toFixed(5)}` : "Belum dipilih"}
+                                {startPoint
+                                    ? `${startPoint.lat.toFixed(
+                                          5
+                                      )}, ${startPoint.lng.toFixed(5)}`
+                                    : "Belum dipilih"}
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Titik Pengantaran</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Titik Pengantaran
+                            </label>
                             <div className="text-sm">
-                                {endPoint ? `${endPoint.lat.toFixed(5)}, ${endPoint.lng.toFixed(5)}` : "Belum dipilih"}
+                                {endPoint
+                                    ? `${endPoint.lat.toFixed(
+                                          5
+                                      )}, ${endPoint.lng.toFixed(5)}`
+                                    : "Belum dipilih"}
                             </div>
                         </div>
 
                         {distance && duration && (
                             <div className="bg-blue-50 p-3 rounded-lg">
-                                <div className="font-semibold mb-2">Hasil Rute</div>
+                                <div className="font-semibold mb-2">
+                                    Hasil Rute
+                                </div>
                                 <div className="flex justify-between mb-2">
                                     <span>Jarak</span>
                                     <span>{distance} km</span>
@@ -572,7 +692,9 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                         <button
                             type="submit"
                             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                            disabled={loading || !startPoint || !endPoint || !geometry}
+                            disabled={
+                                loading || !startPoint || !endPoint || !geometry
+                            }
                         >
                             Simpan Rute
                         </button>
