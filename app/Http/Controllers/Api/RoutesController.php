@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Routes;
 use Illuminate\Http\Request;
+use App\Models\RoutePoints;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class RoutesController extends Controller
 {
@@ -14,32 +17,69 @@ class RoutesController extends Controller
         return response()->json($routes);
     }
 
-   public function store(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'driver_id' => 'required',
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'freight_id' => 'required|exists:freights,id',
-            'name' => 'required|string|max:255',
-            'distance' => 'required|numeric',
-            'duration' => 'required|numeric',
-            'weight' => 'required|numeric',
-            'weight_name' => 'required|string|max:100',
-            'geometry' => 'required|array',
-        ]);
+  public function store(Request $request)
+    {
+        try {
+            // Validate input
+            $validated = $request->validate([
+                'driver_id' => 'required', // Ensure driver_id exists in drivers table
+                'vehicle_id' => 'required|integer|exists:vehicles,id', // Ensure vehicle_id exists in vehicles table
+                'freight_id' => 'required|integer|exists:freights,id', // Ensure freight_id exists in freights table
+                'name' => 'required|string|max:255',
+                'distance' => 'required|numeric|min:0', // Ensure non-negative distance in meters
+                'duration' => 'required|numeric|min:0', // Ensure non-negative duration in seconds
+                'weight' => 'required|numeric|min:0', // Ensure non-negative weight
+                'weight_name' => 'required|string|max:100',
+                'geometry' => 'required|array', // Ensure geometry is an array
+                'start_point.lat' => 'required|numeric|between:-90,90', // Validate latitude
+                'start_point.lng' => 'required|numeric|between:-180,180', // Validate longitude
+                'end_point.lat' => 'required|numeric|between:-90,90', // Validate latitude
+                'end_point.lng' => 'required|numeric|between:-180,180', // Validate longitude
+            ]);
 
-        $route = Routes::create($validated);
+          
+            // Create route
+            $route = Routes::create([
+                'driver_id' => $request->input('driver_id'),
+                'vehicle_id' => $request->input('vehicle_id'),
+                'freight_id' => $request->input('freight_id'),
+                'name' => $request->input('name'),
+                'distance' => $request->input('distance') / 1000, // Convert meters to km
+                'duration' => $request->input('duration') / 60, // Convert seconds to minutes
+                'weight' => $request->input('weight'),
+                'weight_name' => $request->input('weight_name'),
+                'geometry' => json_encode($request->input('geometry')), // Store as JSON
+            ]);
 
-        return response()->json(['message' => 'Route created successfully', 'route' => $route], 201);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Server Error',
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ], 500);
+            // Create route points
+            $route_points = RoutePoints::create([
+                'route_id' => $route->id, // Ensure this is an integer
+                'latitude_start' => (float) $request->input('start_point.lat'), // Cast to float
+                'longitude_start' => (float) $request->input('start_point.lng'), // Cast to float
+                'latitude_end' => (float) $request->input('end_point.lat'), // Cast to float
+                'longitude_end' => (float) $request->input('end_point.lng'), // Cast to float
+            ]);
+
+            return response()->json([
+                'message' => 'Route created successfully',
+                'route' => $route,
+                'route_points' => $route_points,
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            
+            return response()->json([
+                'message' => 'Server Error',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
+        }
     }
-}
 
 
     public function show($id)

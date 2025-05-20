@@ -32,15 +32,19 @@ class RoutePointsResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('longitude')
+                Forms\Components\TextInput::make('longitude_start')
                     ->required()
                     ->numeric(),
                 Forms\Components\TextInput::make('latitude')
                     ->required()
                     ->numeric(),
-                Forms\Components\TextInput::make('order_index')
+                Forms\Components\TextInput::make('longitude_end')
                     ->required()
                     ->numeric(),
+                Forms\Components\TextInput::make('latitude_end')
+                    ->required()
+                    ->numeric(),
+                
             ]);
     }
 
@@ -55,13 +59,16 @@ class RoutePointsResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('longitude')
+                Tables\Columns\TextColumn::make('longitude_start')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('latitude')
+                Tables\Columns\TextColumn::make('latitude_start')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('order_index')
+                Tables\Columns\TextColumn::make('longitude_end')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('latitude_end')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')

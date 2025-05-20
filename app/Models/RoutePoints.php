@@ -9,7 +9,7 @@ class RoutePoints extends Model
 {
     protected $fillable = [
         'route_id', 'type', 'name',
-        'longitude', 'latitude', 'order_index'
+        'longitude_start', 'latitude_start', 'latitude_end','longitude_end'
     ];
 
     public function route(): BelongsTo

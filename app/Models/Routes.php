@@ -36,6 +36,6 @@ class Routes extends Model
 
     public function points(): HasMany
     {
-        return $this->hasMany(RoutePoints::class);
+        return $this->hasMany(RoutePoints::class, 'route_id');
     }
 }

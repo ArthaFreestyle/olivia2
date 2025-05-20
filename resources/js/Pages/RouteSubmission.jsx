@@ -1,6 +1,7 @@
 import { Head } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import "leaflet/dist/leaflet.css";
 
 export default function RouteSubmission({ driver, vehicles, freights }) {
     const [map, setMap] = useState(null);
@@ -452,11 +453,19 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             vehicle_id: driver.vehicle[0].id, // Ensure a vehicle is available
             freight_id: formData.freight_id,
             name: formData.name,
-            distance: parseFloat(distance),
-            duration: parseInt(duration),
-            weight: parseFloat(formData.weight),
+            distance: distance,
+            duration: duration,
+            weight: formData.weight,
             weight_name: formData.weight_name,
             geometry,
+            start_point: {
+                lat: startPoint.lat,
+                lng: startPoint.lng,
+            },
+            end_point: {
+                lat: endPoint.lat,
+                lng: endPoint.lng,
+            },
         };
 
         try {
@@ -476,7 +485,7 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             if (err.response?.status === 422) {
                 setFormError(err.response.data.errors);
             } else {
-               
+               console.error(err.response.data);
                 setError("Gagal menyimpan rute: " + err.response.data);
             }
         }

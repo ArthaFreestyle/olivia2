@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Freights;
+use App\Models\RoutePoints;
 use Illuminate\Http\Request;
 use App\Models\Routes;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class DriverController extends Controller
 {
     public function index()
     {
-        $freights = Freights::all();
+        $freights = Freights::with('points')->get();
         $driver = auth()->user()->load('vehicle');
         return inertia('RouteSubmission', [
             'freights' => $freights,
@@ -33,9 +36,27 @@ class DriverController extends Controller
             'geometry' => 'required|array',
         ]);
 
-        $route = Routes::create($validated);
+        $route = Routes::create([
+            'driver_id' => $request->input('driver_id'),
+            'vehicle_id' => $request->input('vehicle_id'),
+            'freight_id' => $request->input('freight_id'),
+            'name' => $request->input('name'),
+            'distance' => $request->input('distance') / 1000, // Convert meters to km
+            'duration' => $request->input('duration') / 60,   // Convert seconds to minutes
+            'weight' => $request->input('weight'),
+            'weight_name' => $request->input('weight_name'),
+            'geometry' => json_encode($request->input('geometry')),
+        ]);
 
-        return response()->json(['message' => 'Route created successfully', 'route' => $route], 201);
+        $route_points = RoutePoints::create([
+            'route_id' => $route->id,
+            'latitude_start' => $request->input('start_point.lat'),
+            'longitude_start' => $request->input('start_point.lng'),
+            'latitude_end' => $request->input('end_point.lat'),
+            'longitude_end' => $request->input('end_point.lng'),
+        ]);
+
+        return response()->json(['message' => 'Route created successfully', 'route' => $route,'route_points' => $route_points], 201);
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Server Error',
@@ -46,4 +67,36 @@ class DriverController extends Controller
 }
 
 
+public function getRoute()
+{
+    try {
+        $routes = Routes::with('points')->get();
+
+        if ($routes->isNotEmpty()) {
+            return response()->json([
+                'code' => 'Ok',
+                'routes' => $routes->map(function ($route) {
+                    return [
+                        'geometry' => $route->geometry,
+                        'distance' => $route->distance,
+                        'duration' => $route->duration,
+                        'weight' => $route->weight,
+                        'weight_name' => $route->weight_name,
+                        'points' => $route->points,
+                    ];
+                })->values(), // pastikan hasilnya ter-serialisasi dengan baik
+            ]);
+        }
+
+        return response()->json([
+            'code' => 'Ok',
+            'routes' => [],
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'code' => 'Error',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
 }
