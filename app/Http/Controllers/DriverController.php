@@ -43,8 +43,6 @@ class DriverController extends Controller
             'name' => $request->input('name'),
             'distance' => $request->input('distance') / 1000, // Convert meters to km
             'duration' => $request->input('duration') / 60,   // Convert seconds to minutes
-            'weight' => $request->input('weight'),
-            'weight_name' => $request->input('weight_name'),
             'geometry' => json_encode($request->input('geometry')),
         ]);
 
@@ -80,8 +78,6 @@ public function getRoute()
                         'geometry' => json_decode($route->geometry, true),
                         'distance' => $route->distance,
                         'duration' => $route->duration,
-                        'weight' => $route->weight,
-                        'weight_name' => $route->weight_name,
                         'points' => $route->points,
                     ];
                 })->values(), // pastikan hasilnya ter-serialisasi dengan baik

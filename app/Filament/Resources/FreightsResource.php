@@ -23,13 +23,7 @@ class FreightsResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Textarea::make('description')
-                    ->required()
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('total_weight_kg')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('volume_m3')
+                Forms\Components\TextInput::make('max_weight_kg')
                     ->required()
                     ->numeric(),
                 Forms\Components\TextInput::make('created_by_user_id')
@@ -41,10 +35,7 @@ class FreightsResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('total_weight_kg')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('volume_m3')
+                Tables\Columns\TextColumn::make('max_weight_kg')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_by_user_id')

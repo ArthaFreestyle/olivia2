@@ -41,12 +41,6 @@ class RoutesResource extends Resource
                 Forms\Components\TextInput::make('duration')
                     ->required()
                     ->numeric(),
-                Forms\Components\TextInput::make('weight')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('weight_name')
-                    ->required()
-                    ->maxLength(255),
                 Forms\Components\TextInput::make('geometry')
                     ->required(),
             ]);
@@ -73,11 +67,6 @@ class RoutesResource extends Resource
                 Tables\Columns\TextColumn::make('duration')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('weight')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('weight_name')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

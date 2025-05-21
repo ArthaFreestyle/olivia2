@@ -275,7 +275,7 @@ export default function Dashboard() {
                 const startMarker = L.marker([routeData.points[0].latitude_start, routeData.points[0].longitude_start], {
                     title: `Titik Awal: ${routeData.name}`,
                     icon: L.divIcon({
-                        html: '<div class="custom-marker start-marker"><i class="fas fa-play-circle"></i></div>',
+                        html: '<div class="custom-marker start-marker"><i class="fas fa-regular fa-truck"></i></i></div>',
                         className: "",
                         iconSize: [40, 40],
                         iconAnchor: [20, 20],
