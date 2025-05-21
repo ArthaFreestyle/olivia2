@@ -10,7 +10,11 @@ use App\Models\Routes;
 use App\Models\FreightUserWeights;
 class Freights extends Model
 {
-    protected $fillable = ['description', 'total_weight_kg', 'volume_m3', 'created_by_user_id'];
+    // protected $fillable = ['description', 'total_weight_kg', 'volume_m3', 'created_by_user_id'];
+
+    protected $guard = [
+
+    ];
 
     public function creator(): BelongsTo
     {

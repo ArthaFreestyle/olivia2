@@ -11,7 +11,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 });
 
 
-    Route::get('api/routes', [DriverController::class, 'getRoute']);
+Route::get('api/routes', [DriverController::class, 'getRoute']);
 
 
 

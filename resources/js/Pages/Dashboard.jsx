@@ -1,5 +1,6 @@
 import { Head } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
+import { Link } from '@inertiajs/react';
 
 export default function Dashboard() {
     const [map, setMap] = useState(null);
@@ -10,6 +11,7 @@ export default function Dashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [locatingUser, setLocatingUser] = useState(false);
     const leafletRef = useRef(null);
+
 
     // Informasi driver untuk freight pooling yang transparan
     const [driverInfo, setDriverInfo] = useState({
@@ -572,6 +574,17 @@ export default function Dashboard() {
                             <i className="fas fa-redo-alt mr-2"></i>
                             Reset Peta
                         </button>
+
+                        <Link
+                            href="/logout"
+                            method="post"
+                            className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-4 py-2 rounded-lg shadow flex items-center transition ml-2"
+                        >
+                            <i className="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </Link>
+
+
                     </div>
                 </div>
 
@@ -621,9 +634,8 @@ export default function Dashboard() {
                 </div>
 
                 <div
-                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 backdrop-blur w-80 p-5 shadow-xl border-l border-gray-200 sidebar ${
-                        sidebarOpen ? "sidebar-open" : "sidebar-closed"
-                    }`}
+                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 backdrop-blur w-80 p-5 shadow-xl border-l border-gray-200 sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"
+                        }`}
                 >
                     {selectedMarker && (
                         <>
@@ -647,14 +659,12 @@ export default function Dashboard() {
                             <div className="mb-4">
                                 <div className="w-full h-32 bg-blue-50 rounded-lg mb-2 flex items-center justify-center">
                                     <div
-                                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white ${
-                                            selectedMarker.type === "start" ? "bg-green-500" : "bg-red-500"
-                                        }`}
+                                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white ${selectedMarker.type === "start" ? "bg-green-500" : "bg-red-500"
+                                            }`}
                                     >
                                         <i
-                                            className={`fas ${
-                                                selectedMarker.type === "start" ? "fa-play-circle" : "fa-flag-checkered"
-                                            } text-2xl`}
+                                            className={`fas ${selectedMarker.type === "start" ? "fa-play-circle" : "fa-flag-checkered"
+                                                } text-2xl`}
                                         ></i>
                                     </div>
                                 </div>
@@ -778,6 +788,7 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
+
                             <div className="mt-6">
                                 <button
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center"
@@ -788,6 +799,9 @@ export default function Dashboard() {
                                     <i className="fas fa-location-arrow mr-2"></i>
                                     Lihat di Peta
                                 </button>
+
+
+
                             </div>
                         </>
                     )}

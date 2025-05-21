@@ -33,12 +33,42 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
         $user = Auth::user();
-        if($user->role == 'driver'){
+
+        if ($user->role == 'driver') {
             return redirect(route('driver', absolute: false));
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        if ($user->role == 'user') {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->withErrors([
+        'password' => 'Login failed, gunakan akun driver atau user.',
+    ]);
     }
+
+    //     public function store(LoginRequest $request): RedirectResponse
+    // {
+    //     $request->authenticate();
+
+    //     $request->session()->regenerate();
+    //     $user = Auth::user();
+    //     if($user->role == 'driver'){
+    //         return redirect(route('driver', absolute: false));
+    //     }
+
+    //      if($user->role == 'user'){
+    //         return redirect(route('dashboard', absolute: false));
+    //     }
+
+    //     // return redirect()->intended(route('/dashboard', absolute: false));
+    //     return redirect('/admin');
+    // }
+
 
     /**
      * Destroy an authenticated session.
@@ -51,6 +81,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }
