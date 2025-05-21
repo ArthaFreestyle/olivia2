@@ -235,6 +235,7 @@ export default function Dashboard() {
                 throw new Error(data.message || "Tidak ada rute yang ditemukan");
             }
 
+            console.log("Route Data:", data);
             const newRoutes = data.routes.map((routeData) => {
                 const routeGeometry = routeData.geometry;
                 const routeLayer = L.geoJSON(routeGeometry, {
@@ -269,9 +270,9 @@ export default function Dashboard() {
                 };
                 animateDash();
 
-                console.log("Route Data:", routeData);
+                
 
-                const startMarker = L.marker([routeData.points[0][1], routeData.points[0][0]], {
+                const startMarker = L.marker([routeData.points[0].latitude_start, routeData.points[0].longitude_start], {
                     title: `Titik Awal: ${routeData.name}`,
                     icon: L.divIcon({
                         html: '<div class="custom-marker start-marker"><i class="fas fa-play-circle"></i></div>',
@@ -281,7 +282,7 @@ export default function Dashboard() {
                     }),
                 }).addTo(mapInstance);
 
-                const endMarker = L.marker([routeData.end[1], routeData.end[0]], {
+                const endMarker = L.marker([routeData.points[0].latitude_end, routeData.points[0].longitude_end], {
                     title: `Titik Akhir: ${routeData.name}`,
                     icon: L.divIcon({
                         html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',

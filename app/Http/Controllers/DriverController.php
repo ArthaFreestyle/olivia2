@@ -13,7 +13,7 @@ class DriverController extends Controller
 {
     public function index()
     {
-        $freights = Freights::with('points')->get();
+        $freights = Freights::all();
         $driver = auth()->user()->load('vehicle');
         return inertia('RouteSubmission', [
             'freights' => $freights,
@@ -77,7 +77,7 @@ public function getRoute()
                 'code' => 'Ok',
                 'routes' => $routes->map(function ($route) {
                     return [
-                        'geometry' => $route->geometry,
+                        'geometry' => json_decode($route->geometry, true),
                         'distance' => $route->distance,
                         'duration' => $route->duration,
                         'weight' => $route->weight,

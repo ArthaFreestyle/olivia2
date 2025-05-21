@@ -14,6 +14,6 @@ class RoutePoints extends Model
 
     public function route(): BelongsTo
     {
-        return $this->belongsTo(Routes::class);
+        return $this->belongsTo(Routes::class,'route_id');
     }
 }
