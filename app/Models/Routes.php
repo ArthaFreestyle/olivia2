@@ -38,4 +38,8 @@ class Routes extends Model
     {
         return $this->hasMany(RoutePoints::class, 'route_id');
     }
+
+    public function weightNow():HasMany{
+        return $this->hasMany(FreightUserWeights::class, 'routes_id');
+    }
 }

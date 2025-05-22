@@ -1,9 +1,9 @@
-import { Head, Link } from "@inertiajs/react"; // Add Link for navigation
+import { Head, Link } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 
-export default function RouteSubmission({ driver, freights ,routes}) {
+export default function RouteSubmission({ driver, freights, routes, customers }) {
     const [map, setMap] = useState(null);
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
@@ -14,9 +14,11 @@ export default function RouteSubmission({ driver, freights ,routes}) {
     const [geometry, setGeometry] = useState(null);
     const [error, setError] = useState(null);
     const [formError, setFormError] = useState(null);
-    const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Renamed for clarity
-    const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // New state for left sidebar
+    const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+    const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
     const [locatingUser, setLocatingUser] = useState(false);
+    const [selectedRoute, setSelectedRoute] = useState(null); // New state for selected route
+    const [loadFormData, setLoadFormData] = useState({ weight: "", customer_id: "" }); // Form data for adding load
     const leafletRef = useRef(null);
     const clickStage = useRef(0);
     const mapRef = useRef(null);
@@ -30,14 +32,12 @@ export default function RouteSubmission({ driver, freights ,routes}) {
     useEffect(() => {
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        link.href =
-            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css";
+        link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css";
         document.head.appendChild(link);
 
         const iconLink = document.createElement("link");
         iconLink.rel = "stylesheet";
-        iconLink.href =
-            "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css";
+        iconLink.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css";
         document.head.appendChild(iconLink);
 
         const style = document.createElement("style");
@@ -67,7 +67,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
             .leaflet-popup-content {
                 margin: 12px;
             }
-            .right-sidebar { /* Renamed for clarity */
+            .right-sidebar {
                 transition: transform 0.3s ease;
             }
             .right-sidebar-open {
@@ -157,7 +157,6 @@ export default function RouteSubmission({ driver, freights ,routes}) {
         };
     }, []);
 
-    // Rest of your useEffect for Leaflet map initialization remains unchanged
     useEffect(() => {
         if (typeof window !== "undefined") {
             import("leaflet").then((L) => {
@@ -440,7 +439,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
         if (mapRef.current) {
             if (startPoint?.marker)
                 mapRef.current.removeLayer(startPoint.marker);
-            if (endPoint?.marker) mapRef.current.removeLayer(endPoint.marker );
+            if (endPoint?.marker) mapRef.current.removeLayer(endPoint.marker);
             if (route?.main) mapRef.current.removeLayer(route.main);
             if (route?.animated) mapRef.current.removeLayer(route.animated);
 
@@ -457,6 +456,8 @@ export default function RouteSubmission({ driver, freights ,routes}) {
                 freight_id: "",
                 pricing: "",
             });
+            setSelectedRoute(null); // Reset selected route
+            setLoadFormData({ weight: "", customer_id: "" }); // Reset load form
             clickStage.current = 0;
             mapRef.current.setView([-6.2, 106.816666], 13);
         }
@@ -501,9 +502,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
         };
 
         try {
-            console.log("Payload:", payload);
-            axios.defaults.headers.common["X-Requested-With"] =
-                "XMLHttpRequest";
+            axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
             const token = document
                 .querySelector('meta[name="csrf-token"]')
                 ?.getAttribute("content");
@@ -513,7 +512,6 @@ export default function RouteSubmission({ driver, freights ,routes}) {
             const response = await axios.post("/routes", payload);
             alert(response.data.message);
             resetMap();
-            
         } catch (err) {
             if (err.response?.status === 422) {
                 setFormError(err.response.data.errors);
@@ -524,11 +522,67 @@ export default function RouteSubmission({ driver, freights ,routes}) {
         }
     };
 
+    const handleLoadSubmit = async (e) => {
+        e.preventDefault();
+        setFormError(null);
+
+        if (!loadFormData.weight || !loadFormData.customer_id) {
+            setError("Semua kolom formulir muatan harus diisi.");
+            return;
+        }
+
+        const payload = {
+            route_id: selectedRoute.id,
+            weight_kg: parseFloat(loadFormData.weight),
+            customer_id: loadFormData.customer_id,
+        };
+
+        try {
+            axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
+            const token = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute("content");
+            if (token) {
+                axios.defaults.headers.common["X-CSRF-TOKEN"] = token;
+            }
+            const response = await axios.post("/loads", payload); // Adjust endpoint as needed
+            alert(response.data.message);
+            setLoadFormData({ weight: "", customer_id: "" }); // Reset form
+            setSelectedRoute(null); // Return to route submission form
+        } catch (err) {
+            if (err.response?.status === 422) {
+                setFormError(err.response.data.errors);
+            } else {
+                console.error(err.response?.data);
+                setError("Gagal menyimpan muatan: " + err.response?.data);
+            }
+        }
+    };
+
+    const handleRouteClick = (route) => {
+
+        setSelectedRoute(route);
+        setRightSidebarOpen(true); // Open sidebar when route is clicked
+    };
+
     const formatDuration = (minutes) => {
         if (!minutes) return "";
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
         return hours > 0 ? `${hours} jam ${mins} menit` : `${mins} menit`;
+    };
+
+    // Calculate current load and available capacity
+    const calculateCurrentLoad = (route) => {
+        // Assuming route.loads is an array of load objects with weight_kg
+        return route.loads?.reduce((sum, load) => sum + (load.weight_kg || 0), 0) || 0;
+    };
+
+    const calculateAvailableCapacity = (route) => {
+        const freight = freights.find(f => f.id === route.freight_id);
+        const maxCapacity = freight?.max_weight_kg || 0;
+        const currentLoad = calculateCurrentLoad(route);
+        return maxCapacity - currentLoad;
     };
 
     return (
@@ -545,16 +599,12 @@ export default function RouteSubmission({ driver, freights ,routes}) {
                     </div>
                     <div className="flex items-center">
                         <button
-                            onClick={() =>
-                                locateUser(mapRef.current, leafletRef.current)
-                            }
+                            onClick={() => locateUser(mapRef.current, leafletRef.current)}
                             className="bg-white text-blue-600 px-4 py-2 rounded-lg shadow mr-2"
                             disabled={locatingUser}
                         >
                             <i
-                                className={`fas fa-location-crosshairs mr-2 ${
-                                    locatingUser ? "animate-pulse" : ""
-                                }`}
+                                className={`fas fa-location-crosshairs mr-2 ${locatingUser ? "animate-pulse" : ""}`}
                             ></i>
                             {locatingUser ? "Mencari..." : "Lokasi Saya"}
                         </button>
@@ -575,18 +625,18 @@ export default function RouteSubmission({ driver, freights ,routes}) {
                     }`}
                 >
                     <h3 className="font-bold text-lg text-gray-800 mb-4">Menu</h3>
-                    {routes.map((route) => (
-                        <div className="space-y-2" key={route.id}>
-                        <Link
-                            href={`/routes/${route.id}`} // Adjust the route as needed
-                            className="menu-item text-gray-700"
-                        >
-                            <i className="fa fa-truck"></i>
-                            {route.name}
-                        </Link>
-                        {/* Add more menu items here if needed */}
+                    <div className="space-y-2">
+                        {routes.map((route) => (
+                            <div
+                                key={route.id}
+                                className="menu-item text-gray-700"
+                                onClick={() => handleRouteClick(route)}
+                            >
+                                <i className="fa fa-truck"></i>
+                                {route.name}
+                            </div>
+                        ))}
                     </div>
-                    ))}
                 </div>
 
                 {/* Toggle Button for Left Sidebar */}
@@ -613,151 +663,215 @@ export default function RouteSubmission({ driver, freights ,routes}) {
                         rightSidebarOpen ? "right-sidebar-open" : "right-sidebar-closed"
                     }`}
                 >
-                    <h3 className="font-bold text-lg text-gray-800 mb-4">
-                        Submit Rute
-                    </h3>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Nama Rute
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        name: e.target.value,
-                                    })
-                                }
-                                className="input-field"
-                                required
-                            />
-                            {formError?.name && (
-                                <div className="error-text">
-                                    {formError.name[0]}
-                                </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Kapasitas
-                            </label>
-                            <select
-                                value={formData.freight_id}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        freight_id: e.target.value,
-                                    })
-                                }
-                                className="input-field"
-                                required
-                            >
-                                <option value="">Pilih Freight</option>
-                                {freights?.map((freight) => (
-                                    <option key={freight.id} value={freight.max_weight_kg}>
-                                        {freight.max_weight_kg} kg
-                                    </option>
-                                ))}
-                            </select>
-                            {formError?.freight_id && (
-                                <div className="error-text">
-                                    {formError.freight_id[0]}
-                                </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Harga
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.pricing}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        pricing: e.target.value,
-                                    })
-                                }
-                                className="input-field"
-                                required
-                            />
-                            {formError?.pricing && (
-                                <div className="error-text">
-                                    {formError.pricing[0]}
-                                </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Titik Pengambilan
-                            </label>
-                            <div className="text-sm">
-                                {startPoint
-                                    ? `${startPoint.lat.toFixed(
-                                          5
-                                      )}, ${startPoint.lng.toFixed(5)}`
-                                    : "Belum dipilih"}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Titik Pengantaran
-                            </label>
-                            <div className="text-sm">
-                                {endPoint
-                                    ? `${endPoint.lat.toFixed(
-                                          5
-                                      )}, ${endPoint.lng.toFixed(5)}`
-                                    : "Belum dipilih"}
-                            </div>
-                        </div>
-
-                        {distance && duration && (
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                                <div className="font-semibold mb-2">
-                                    Hasil Rute
-                                </div>
+                    {selectedRoute ? (
+                        <>
+                            <h3 className="font-bold text-lg text-gray-800 mb-4">
+                                Tambah Muatan untuk {selectedRoute.name}
+                            </h3>
+                            <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                                
+                                <div className="font-semibold mb-2">Status Muatan</div>
                                 <div className="flex justify-between mb-2">
-                                    <span>Jarak</span>
-                                    <span>{distance} km</span>
+                                    <span>Jumlah Muatan Saat Ini</span>
+                                    <span>{calculateCurrentLoad(selectedRoute)} kg</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>Waktu Tempuh</span>
-                                    <span>{formatDuration(duration)}</span>
+                                    <span>Kapasitas Tersedia</span>
+                                    <span>{selectedRoute.max_weight} kg</span>
                                 </div>
                             </div>
-                        )}
-
-                        {loading && (
-                            <div className="bg-blue-50 p-3 rounded-lg flex items-center">
-                                <i className="fas fa-circle-notch animate-spin mr-2"></i>
-                                Menghitung rute...
-                            </div>
-                        )}
-
-                        {error && (
-                            <div className="bg-red-50 p-3 rounded-lg text-red-600">
-                                <i className="fas fa-exclamation-circle mr-2"></i>
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                            disabled={
-                                loading || !startPoint || !endPoint || !geometry
-                            }
-                        >
-                            Simpan Rute
-                        </button>
-                    </form>
+                            <form onSubmit={handleLoadSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Jumlah Muatan (kg)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={loadFormData.weight}
+                                        onChange={(e) =>
+                                            setLoadFormData({
+                                                ...loadFormData,
+                                                weight: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                        min="0"
+                                        step="0.1"
+                                    />
+                                    {formError?.weight_kg && (
+                                        <div className="error-text">{formError.weight_kg[0]}</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Nama Customer
+                                    </label>
+                                    <select
+                                        value={loadFormData.customer_id}
+                                        onChange={(e) =>
+                                            setLoadFormData({
+                                                ...loadFormData,
+                                                customer_id: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                    >
+                                        <option value="">Pilih Customer</option>
+                                        {customers?.map((customer) => (
+                                            <option key={customer.id} value={customer.id}>
+                                                {customer.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {formError?.customer_id && (
+                                        <div className="error-text">{formError.customer_id[0]}</div>
+                                    )}
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                                    disabled={loading}
+                                >
+                                    Tambah Muatan
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedRoute(null)}
+                                    className="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 mt-2"
+                                >
+                                    Kembali ke Form Rute
+                                </button>
+                            </form>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="font-bold text-lg text-gray-800 mb-4">
+                                Submit Rute
+                            </h3>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Nama Rute
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                name: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                    />
+                                    {formError?.name && (
+                                        <div className="error-text">{formError.name[0]}</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Kapasitas
+                                    </label>
+                                    <select
+                                        value={formData.freight_id}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                freight_id: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                    >
+                                        <option value="">Pilih Freight</option>
+                                        {freights?.map((freight) => (
+                                            <option key={freight.id} value={freight.id}>
+                                                {freight.max_weight_kg} kg
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {formError?.freight_id && (
+                                        <div className="error-text">{formError.freight_id[0]}</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Harga
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.pricing}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                pricing: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                    />
+                                    {formError?.pricing && (
+                                        <div className="error-text">{formError.pricing[0]}</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Titik Pengambilan
+                                    </label>
+                                    <div className="text-sm">
+                                        {startPoint
+                                            ? `${startPoint.lat.toFixed(5)}, ${startPoint.lng.toFixed(5)}`
+                                            : "Belum dipilih"}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Titik Pengantaran
+                                    </label>
+                                    <div className="text-sm">
+                                        {endPoint
+                                            ? `${endPoint.lat.toFixed(5)}, ${endPoint.lng.toFixed(5)}`
+                                            : "Belum dipilih"}
+                                    </div>
+                                </div>
+                                {distance && duration && (
+                                    <div className="bg-blue-50 p-3 rounded-lg">
+                                        <div className="font-semibold mb-2">Hasil Rute</div>
+                                        <div className="flex justify-between mb-2">
+                                            <span>Jarak</span>
+                                            <span>{distance} km</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Waktu Tempuh</span>
+                                            <span>{formatDuration(duration)}</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {loading && (
+                                    <div className="bg-blue-50 p-3 rounded-lg flex items-center">
+                                        <i className="fas fa-circle-notch animate-spin mr-2"></i>
+                                        Menghitung rute...
+                                    </div>
+                                )}
+                                {error && (
+                                    <div className="bg-red-50 p-3 rounded-lg text-red-600">
+                                        <i className="fas fa-exclamation-circle mr-2"></i>
+                                        {error}
+                                    </div>
+                                )}
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                                    disabled={loading || !startPoint || !endPoint || !geometry}
+                                >
+                                    Simpan Rute
+                                </button>
+                            </form>
+                        </>
+                    )}
                 </div>
 
                 {/* Toggle Button for Right Sidebar */}

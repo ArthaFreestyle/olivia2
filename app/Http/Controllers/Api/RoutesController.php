@@ -88,7 +88,7 @@ class RoutesController extends Controller
 
     public function show($id)
     {
-        $route = Routes::with(['driver', 'vehicle', 'freight', 'points'])->find($id);
+        $route = Routes::with(['driver', 'vehicle', 'weightNow', 'points'])->find($id);
 
         if (!$route) {
             return response()->json(['message' => 'Route not found'], 404);

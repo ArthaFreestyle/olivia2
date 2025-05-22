@@ -9,11 +9,11 @@ use App\Models\User;
 
 class FreightUserWeights extends Model
 {
-    protected $fillable = ['freight_id', 'user_id', 'contributed_weight_kg'];
+    protected $fillable = ['routes_id', 'user_id', 'contributed_weight_kg'];
 
     public function freight(): BelongsTo
     {
-        return $this->belongsTo(Freights::class);
+        return $this->belongsTo(Routes::class);
     }
 
     public function user(): BelongsTo
