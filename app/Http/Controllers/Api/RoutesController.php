@@ -13,8 +13,10 @@ class RoutesController extends Controller
 {
     public function index()
     {
-        $routes = Routes::with(['driver', 'vehicle', 'freight', 'points'])->get();
-        return response()->json($routes);
+         $driver = auth()->user()->load('routes');
+        return response()->json([
+            'routes' => $driver
+        ]);
     }
 
   public function store(Request $request)
@@ -28,13 +30,12 @@ class RoutesController extends Controller
                 'name' => 'required|string|max:255',
                 'distance' => 'required|numeric|min:0', // Ensure non-negative distance in meters
                 'duration' => 'required|numeric|min:0', // Ensure non-negative duration in seconds
-                'weight' => 'required|numeric|min:0', // Ensure non-negative weight
-                'weight_name' => 'required|string|max:100',
                 'geometry' => 'required|array', // Ensure geometry is an array
                 'start_point.lat' => 'required|numeric|between:-90,90', // Validate latitude
                 'start_point.lng' => 'required|numeric|between:-180,180', // Validate longitude
                 'end_point.lat' => 'required|numeric|between:-90,90', // Validate latitude
                 'end_point.lng' => 'required|numeric|between:-180,180', // Validate longitude
+                'pricing' => 'required|numeric|min:0', // Ensure non-negative pricing
             ]);
 
           
@@ -44,11 +45,10 @@ class RoutesController extends Controller
                 'vehicle_id' => $request->input('vehicle_id'),
                 'freight_id' => $request->input('freight_id'),
                 'name' => $request->input('name'),
-                'distance' => $request->input('distance') / 1000, // Convert meters to km
-                'duration' => $request->input('duration') / 60, // Convert seconds to minutes
-                'weight' => $request->input('weight'),
-                'weight_name' => $request->input('weight_name'),
+                'distance' => $request->input('distance'), // Convert meters to km
+                'duration' => $request->input('duration'), // Convert seconds to minutes
                 'geometry' => json_encode($request->input('geometry')), // Store as JSON
+                'pricing' => $request->input('pricing'), // Store as JSON
             ]);
 
             // Create route points

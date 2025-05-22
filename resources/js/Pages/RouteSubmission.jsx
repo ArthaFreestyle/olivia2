@@ -1,9 +1,9 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react"; // Add Link for navigation
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 
-export default function RouteSubmission({ driver, vehicles, freights }) {
+export default function RouteSubmission({ driver, freights ,routes}) {
     const [map, setMap] = useState(null);
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
@@ -14,7 +14,8 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
     const [geometry, setGeometry] = useState(null);
     const [error, setError] = useState(null);
     const [formError, setFormError] = useState(null);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Renamed for clarity
+    const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // New state for left sidebar
     const [locatingUser, setLocatingUser] = useState(false);
     const leafletRef = useRef(null);
     const clickStage = useRef(0);
@@ -22,9 +23,8 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
 
     const [formData, setFormData] = useState({
         name: "",
-        weight: "",
-        weight_name: "",
         freight_id: "",
+        pricing: "",
     });
 
     useEffect(() => {
@@ -40,12 +40,124 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css";
         document.head.appendChild(iconLink);
 
+        const style = document.createElement("style");
+        style.textContent = `
+            .custom-marker {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                color: white;
+                font-size: 18px;
+            }
+            .start-marker {
+                background-color: #4CAF50;
+                box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            }
+            .end-marker {
+                background-color: #F44336;
+                box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            }
+            .leaflet-popup-content-wrapper {
+                border-radius: 8px;
+                box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+            }
+            .leaflet-popup-content {
+                margin: 12px;
+            }
+            .right-sidebar { /* Renamed for clarity */
+                transition: transform 0.3s ease;
+            }
+            .right-sidebar-open {
+                transform: translateX(0);
+            }
+            .right-sidebar-closed {
+                transform: translateX(100%);
+            }
+            .left-sidebar {
+                transition: transform 0.3s ease;
+            }
+            .left-sidebar-open {
+                transform: translateX(0);
+            }
+            .left-sidebar-closed {
+                transform: translateX(-100%);
+            }
+            .locate-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: white;
+                box-shadow: 0 0 10px rgba(0,0,0,0.3);
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .locate-btn:hover {
+                background-color: #f0f0f0;
+            }
+            .locate-btn-active {
+                background-color: #2196F3;
+                color: white;
+            }
+            .pulsing-circle {
+                border-radius: 50%;
+                height: 70px;
+                width: 70px;
+                position: absolute;
+                left: -15px;
+                top: -15px;
+                z-index: -1;
+                background: rgba(33, 150, 243, 0.3);
+                opacity: 0;
+                animation: pulse 2s infinite;
+            }
+            @keyframes pulse {
+                0% { transform: scale(0.5); opacity: 0; }
+                50% { opacity: 0.4; }
+                100% { transform: scale(1.2); opacity: 0; }
+            }
+            .input-field {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                margin-top: 4px;
+            }
+            .error-text {
+                color: #dc2626;
+                font-size: 0.75rem;
+                margin-top: 2px;
+            }
+            .menu-item {
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            .menu-item:hover {
+                background-color: #f0f0f0;
+            }
+            .menu-item i {
+                margin-right: 8px;
+            }
+        `;
+        document.head.appendChild(style);
+
         return () => {
             document.head.removeChild(link);
             document.head.removeChild(iconLink);
+            document.head.removeChild(style);
         };
     }, []);
 
+    // Rest of your useEffect for Leaflet map initialization remains unchanged
     useEffect(() => {
         if (typeof window !== "undefined") {
             import("leaflet").then((L) => {
@@ -84,93 +196,6 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                         iconSize: [40, 40],
                         iconAnchor: [20, 20],
                     });
-
-                    const style = document.createElement("style");
-                    style.textContent = `
-                        .custom-marker {
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            width: 40px;
-                            height: 40px;
-                            border-radius: 50%;
-                            color: white;
-                            font-size: 18px;
-                        }
-                        .start-marker {
-                            background-color: #4CAF50;
-                            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-                        }
-                        .end-marker {
-                            background-color: #F44336;
-                            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-                        }
-                        .leaflet-popup-content-wrapper {
-                            border-radius: 8px;
-                            box-shadow: 0 3px 14px rgba(0,0,0,0.2);
-                        }
-                        .leaflet-popup-content {
-                            margin: 12px;
-                        }
-                        .sidebar {
-                            transition: transform 0.3s ease;
-                        }
-                        .sidebar-open {
-                            transform: translateX(0);
-                        }
-                        .sidebar-closed {
-                            transform: translateX(100%);
-                        }
-                        .locate-btn {
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            width: 40px;
-                            height: 40px;
-                            border-radius: 50%;
-                            background-color: white;
-                            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                        }
-                        .locate-btn:hover {
-                            background-color: #f0f0f0;
-                        }
-                        .locate-btn-active {
-                            background-color: #2196F3;
-                            color: white;
-                        }
-                        .pulsing-circle {
-                            border-radius: 50%;
-                            height: 70px;
-                            width: 70px;
-                            position: absolute;
-                            left: -15px;
-                            top: -15px;
-                            z-index: -1;
-                            background: rgba(33, 150, 243, 0.3);
-                            opacity: 0;
-                            animation: pulse 2s infinite;
-                        }
-                        @keyframes pulse {
-                            0% { transform: scale(0.5); opacity: 0; }
-                            50% { opacity: 0.4; }
-                            100% { transform: scale(1.2); opacity: 0; }
-                        }
-                        .input-field {
-                            width: 100%;
-                            padding: 8px;
-                            border: 1px solid #d1d5db;
-                            border-radius: 4px;
-                            margin-top: 4px;
-                        }
-                        .error-text {
-                            color: #dc2626;
-                            font-size: 0.75rem;
-                            margin-top: 2px;
-                        }
-                    `;
-                    document.head.appendChild(style);
 
                     const handleMapClick = (e) => {
                         const { lat, lng } = e.latlng;
@@ -415,7 +440,7 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
         if (mapRef.current) {
             if (startPoint?.marker)
                 mapRef.current.removeLayer(startPoint.marker);
-            if (endPoint?.marker) mapRef.current.removeLayer(endPoint.marker);
+            if (endPoint?.marker) mapRef.current.removeLayer(endPoint.marker );
             if (route?.main) mapRef.current.removeLayer(route.main);
             if (route?.animated) mapRef.current.removeLayer(route.animated);
 
@@ -429,9 +454,8 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             setFormError(null);
             setFormData({
                 name: "",
-                weight: "",
-                weight_name: "",
                 freight_id: "",
+                pricing: "",
             });
             clickStage.current = 0;
             mapRef.current.setView([-6.2, 106.816666], 13);
@@ -446,17 +470,25 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             setError("Rute belum lengkap. Pilih titik awal dan akhir.");
             return;
         }
-        console.log(driver);
+
+        if (!formData.name || !formData.freight_id || !formData.pricing) {
+            setError("Semua kolom formulir harus diisi.");
+            return;
+        }
+
+        if (!driver.vehicle || !driver.vehicle[0]) {
+            setError("Tidak ada kendaraan yang tersedia untuk pengemudi.");
+            return;
+        }
 
         const payload = {
             driver_id: driver.id,
-            vehicle_id: driver.vehicle[0].id, // Ensure a vehicle is available
+            vehicle_id: driver.vehicle[0].id,
             freight_id: formData.freight_id,
             name: formData.name,
+            pricing: formData.pricing,
             distance: distance,
             duration: duration,
-            weight: formData.weight,
-            weight_name: formData.weight_name,
             geometry,
             start_point: {
                 lat: startPoint.lat,
@@ -485,8 +517,8 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             if (err.response?.status === 422) {
                 setFormError(err.response.data.errors);
             } else {
-               console.error(err.response.data);
-                setError("Gagal menyimpan rute: " + err.response.data);
+                console.error(err.response?.data);
+                setError("Gagal menyimpan rute: " + err.response?.data);
             }
         }
     };
@@ -504,6 +536,7 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
             <div className="relative w-screen h-screen overflow-hidden bg-gray-100">
                 <div id="map" className="absolute inset-0 z-0" />
 
+                {/* Header */}
                 <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white z-10 p-3 shadow-md flex justify-between items-center">
                     <div className="flex items-center">
                         <i className="fas fa-truck-moving text-white text-xl mr-2"></i>
@@ -534,9 +567,49 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     </div>
                 </div>
 
+                {/* Left Sidebar (Menu) */}
                 <div
-                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 w-96 p-5 shadow-xl border-l border-gray-200 sidebar ${
-                        sidebarOpen ? "sidebar-open" : "sidebar-closed"
+                    className={`absolute top-16 left-0 bottom-0 z-10 bg-white/95 w-64 p-5 shadow-xl border-r border-gray-200 left-sidebar ${
+                        leftSidebarOpen ? "left-sidebar-open" : "left-sidebar-closed"
+                    }`}
+                >
+                    <h3 className="font-bold text-lg text-gray-800 mb-4">Menu</h3>
+                    {routes.map((route) => (
+                        <div className="space-y-2" key={route.id}>
+                        <Link
+                            href="/settings" // Adjust the route as needed
+                            className="menu-item text-gray-700"
+                        >
+                            <i className="fa fa-truck"></i>
+                            {route.name}
+                        </Link>
+                        {/* Add more menu items here if needed */}
+                    </div>
+                    ))}
+                </div>
+
+                {/* Toggle Button for Left Sidebar */}
+                {!leftSidebarOpen && (
+                    <button
+                        onClick={() => setLeftSidebarOpen(true)}
+                        className="absolute top-20 left-4 z-20 bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
+                    >
+                        <i className="fas fa-arrow-right"></i>
+                    </button>
+                )}
+                {leftSidebarOpen && (
+                    <button
+                        onClick={() => setLeftSidebarOpen(false)}
+                        className="absolute top-20 left-4 z-20 bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
+                    >
+                        <i className="fas fa-arrow-left"></i>
+                    </button>
+                )}
+
+                {/* Right Sidebar (Form) */}
+                <div
+                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 w-96 p-5 shadow-xl border-l border-gray-200 right-sidebar ${
+                        rightSidebarOpen ? "right-sidebar-open" : "right-sidebar-closed"
                     }`}
                 >
                     <h3 className="font-bold text-lg text-gray-800 mb-4">
@@ -584,7 +657,7 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                                 <option value="">Pilih Freight</option>
                                 {freights?.map((freight) => (
                                     <option key={freight.id} value={freight.id}>
-                                        {freight.description}
+                                        {freight.max_weight_kg} kg
                                     </option>
                                 ))}
                             </select>
@@ -597,47 +670,23 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
-                                Berat
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={formData.weight}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        weight: e.target.value,
-                                    })
-                                }
-                                className="input-field"
-                                required
-                            />
-                            {formError?.weight && (
-                                <div className="error-text">
-                                    {formError.weight[0]}
-                                </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Nama Satuan Berat
+                                Harga
                             </label>
                             <input
                                 type="text"
-                                value={formData.weight_name}
+                                value={formData.pricing}
                                 onChange={(e) =>
                                     setFormData({
                                         ...formData,
-                                        weight_name: e.target.value,
+                                        pricing: e.target.value,
                                     })
                                 }
                                 className="input-field"
                                 required
                             />
-                            {formError?.weight_name && (
+                            {formError?.pricing && (
                                 <div className="error-text">
-                                    {formError.weight_name[0]}
+                                    {formError.pricing[0]}
                                 </div>
                             )}
                         </div>
@@ -710,12 +759,21 @@ export default function RouteSubmission({ driver, vehicles, freights }) {
                     </form>
                 </div>
 
-                {!sidebarOpen && (
+                {/* Toggle Button for Right Sidebar */}
+                {!rightSidebarOpen && (
                     <button
-                        onClick={() => setSidebarOpen(true)}
+                        onClick={() => setRightSidebarOpen(true)}
                         className="absolute top-20 right-4 z-20 bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
                     >
                         <i className="fas fa-arrow-left"></i>
+                    </button>
+                )}
+                {rightSidebarOpen && (
+                    <button
+                        onClick={() => setRightSidebarOpen(false)}
+                        className="absolute top-20 right-4 z-20 bg-blue-600 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center"
+                    >
+                        <i className="fas fa-arrow-right"></i>
                     </button>
                 )}
             </div>

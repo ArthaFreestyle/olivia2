@@ -61,4 +61,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Vehicles::class, 'owner');
     }
+
+    public function routes()
+    {
+        return $this->hasMany(Routes::class, 'driver_id');
+    }
 }

@@ -41,14 +41,6 @@ class AuthenticatedSessionController extends Controller
         if ($user->role == 'user') {
             return redirect()->intended(route('dashboard', absolute: false));
         }
-
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login')->withErrors([
-        'password' => 'Login failed, gunakan akun driver atau user.',
-    ]);
     }
 
     //     public function store(LoginRequest $request): RedirectResponse

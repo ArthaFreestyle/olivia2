@@ -15,9 +15,11 @@ class DriverController extends Controller
     {
         $freights = Freights::all();
         $driver = auth()->user()->load('vehicle');
+        $routes = auth()->user()->routes;
         return inertia('RouteSubmission', [
             'freights' => $freights,
-            'driver' => $driver
+            'driver' => $driver,
+            'routes' => $routes
         ]);
     }
 
@@ -44,6 +46,7 @@ class DriverController extends Controller
             'distance' => $request->input('distance') / 1000, // Convert meters to km
             'duration' => $request->input('duration') / 60,   // Convert seconds to minutes
             'geometry' => json_encode($request->input('geometry')),
+            'pricing' => $request->input('pricing'),
         ]);
 
         $route_points = RoutePoints::create([
