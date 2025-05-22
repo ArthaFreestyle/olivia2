@@ -513,6 +513,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
             const response = await axios.post("/routes", payload);
             alert(response.data.message);
             resetMap();
+            
         } catch (err) {
             if (err.response?.status === 422) {
                 setFormError(err.response.data.errors);
@@ -577,7 +578,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
                     {routes.map((route) => (
                         <div className="space-y-2" key={route.id}>
                         <Link
-                            href="/settings" // Adjust the route as needed
+                            href={`/routes/${route.id}`} // Adjust the route as needed
                             className="menu-item text-gray-700"
                         >
                             <i className="fa fa-truck"></i>
@@ -641,7 +642,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
-                                Freight
+                                Kapasitas
                             </label>
                             <select
                                 value={formData.freight_id}
@@ -656,7 +657,7 @@ export default function RouteSubmission({ driver, freights ,routes}) {
                             >
                                 <option value="">Pilih Freight</option>
                                 {freights?.map((freight) => (
-                                    <option key={freight.id} value={freight.id}>
+                                    <option key={freight.id} value={freight.max_weight_kg}>
                                         {freight.max_weight_kg} kg
                                     </option>
                                 ))}

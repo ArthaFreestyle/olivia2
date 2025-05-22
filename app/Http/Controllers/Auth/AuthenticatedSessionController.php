@@ -41,6 +41,7 @@ class AuthenticatedSessionController extends Controller
         if ($user->role == 'user') {
             return redirect()->intended(route('dashboard', absolute: false));
         }
+        return redirect()->intended('/dashboard');
     }
 
     //     public function store(LoginRequest $request): RedirectResponse

@@ -11,7 +11,7 @@ use App\Models\Drivers;
 class Routes extends Model
 {
     protected $fillable = [
-        'driver_id', 'vehicle_id', 'freight_id', 'name',
+        'driver_id', 'vehicle_id', 'max_weight', 'name',
         'distance', 'duration', 'geometry','pricing',
     ];
 

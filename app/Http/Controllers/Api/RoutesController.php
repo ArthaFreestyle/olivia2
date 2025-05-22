@@ -8,25 +8,26 @@ use Illuminate\Http\Request;
 use App\Models\RoutePoints;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Models\Freights;
 
 class RoutesController extends Controller
 {
     public function index()
     {
-         $driver = auth()->user()->load('routes');
+        $driver = auth()->user()->load('routes');
         return response()->json([
             'routes' => $driver
         ]);
     }
 
-  public function store(Request $request)
+    public function store(Request $request)
     {
         try {
             // Validate input
             $validated = $request->validate([
                 'driver_id' => 'required', // Ensure driver_id exists in drivers table
                 'vehicle_id' => 'required|integer|exists:vehicles,id', // Ensure vehicle_id exists in vehicles table
-                'freight_id' => 'required|integer|exists:freights,id', // Ensure freight_id exists in freights table
+                'freight_id' => 'required', // Ensure freight_id exists in freights table
                 'name' => 'required|string|max:255',
                 'distance' => 'required|numeric|min:0', // Ensure non-negative distance in meters
                 'duration' => 'required|numeric|min:0', // Ensure non-negative duration in seconds
@@ -38,12 +39,12 @@ class RoutesController extends Controller
                 'pricing' => 'required|numeric|min:0', // Ensure non-negative pricing
             ]);
 
-          
+
             // Create route
             $route = Routes::create([
                 'driver_id' => $request->input('driver_id'),
                 'vehicle_id' => $request->input('vehicle_id'),
-                'freight_id' => $request->input('freight_id'),
+                'max_weight' => $request->input('freight_id'),
                 'name' => $request->input('name'),
                 'distance' => $request->input('distance'), // Convert meters to km
                 'duration' => $request->input('duration'), // Convert seconds to minutes
@@ -60,11 +61,14 @@ class RoutesController extends Controller
                 'longitude_end' => (float) $request->input('end_point.lng'), // Cast to float
             ]);
 
-            return response()->json([
-                'message' => 'Route created successfully',
-                'route' => $route,
-                'route_points' => $route_points,
-            ], 201);
+            $freights = Freights::all();
+            $driver = auth()->user()->load('vehicle');
+            $routes = auth()->user()->routes;
+            return inertia('RouteSubmission', [
+                'freights' => $freights,
+                'driver' => $driver,
+                'routes' => $routes
+            ]);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation Error',
@@ -72,7 +76,7 @@ class RoutesController extends Controller
             ], 422);
         } catch (\Exception $e) {
             // Log the error for debugging
-            
+
             return response()->json([
                 'message' => 'Server Error',
                 'error' => $e->getMessage(),
@@ -86,7 +90,7 @@ class RoutesController extends Controller
     {
         $route = Routes::with(['driver', 'vehicle', 'freight', 'points'])->find($id);
 
-        if (! $route) {
+        if (!$route) {
             return response()->json(['message' => 'Route not found'], 404);
         }
 
@@ -97,7 +101,7 @@ class RoutesController extends Controller
     {
         $route = Routes::find($id);
 
-        if (! $route) {
+        if (!$route) {
             return response()->json(['message' => 'Route not found'], 404);
         }
 
@@ -122,7 +126,7 @@ class RoutesController extends Controller
     {
         $route = Routes::find($id);
 
-        if (! $route) {
+        if (!$route) {
             return response()->json(['message' => 'Route not found'], 404);
         }
 

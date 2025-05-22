@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Routes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use function Termwind\render;
 
 class DriverController extends Controller
 {
@@ -29,7 +30,7 @@ class DriverController extends Controller
         $validated = $request->validate([
             'driver_id' => 'required|exists:drivers,id',
             'vehicle_id' => 'required|exists:vehicles,id',
-            'freight_id' => 'required|exists:freights,id',
+            'freight_id' => 'required',
             'name' => 'required|string|max:255',
             'distance' => 'required|numeric',
             'duration' => 'required|numeric',
@@ -41,7 +42,7 @@ class DriverController extends Controller
         $route = Routes::create([
             'driver_id' => $request->input('driver_id'),
             'vehicle_id' => $request->input('vehicle_id'),
-            'freight_id' => $request->input('freight_id'),
+            'max_weight' => $request->input('freight_id'),
             'name' => $request->input('name'),
             'distance' => $request->input('distance') / 1000, // Convert meters to km
             'duration' => $request->input('duration') / 60,   // Convert seconds to minutes
@@ -57,7 +58,11 @@ class DriverController extends Controller
             'longitude_end' => $request->input('end_point.lng'),
         ]);
 
-        return response()->json(['message' => 'Route created successfully', 'route' => $route,'route_points' => $route_points], 201);
+        return inertia('RouteSubmission', [
+            'message' => 'Route created successfully',
+            'route' => $route,
+            'route_points' => $route_points,
+        ]);
     } catch (\Exception $e) {
         return response()->json([
             'message' => 'Server Error',
