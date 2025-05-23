@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Freights;
 use App\Models\RoutePoints;
 use Illuminate\Http\Request;
@@ -9,18 +10,21 @@ use App\Models\Routes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use function Termwind\render;
+use App\Models\User;
 
 class DriverController extends Controller
 {
     public function index()
     {
         $freights = Freights::all();
+        $users = User::where('role', 'user')->get();
         $driver = auth()->user()->load('vehicle');
-        $routes = auth()->user()->routes;
+        $routes = auth()->user()->routes()->withSum('weightNow', 'contributed_weight_kg')->get();
         return inertia('RouteSubmission', [
             'freights' => $freights,
             'driver' => $driver,
-            'routes' => $routes
+            'routes' => $routes,
+            'users' => $users
         ]);
     }
 

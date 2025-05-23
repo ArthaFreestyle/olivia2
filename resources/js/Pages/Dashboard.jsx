@@ -2,7 +2,7 @@ import { Head } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from '@inertiajs/react';
 
-export default function Dashboard() {
+export default function Dashboard({ logistik }) {
     const [map, setMap] = useState(null);
     const [routes, setRoutes] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -11,26 +11,6 @@ export default function Dashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [locatingUser, setLocatingUser] = useState(false);
     const leafletRef = useRef(null);
-
-
-    // Informasi driver untuk freight pooling yang transparan
-    const [driverInfo, setDriverInfo] = useState({
-        driver: "Ahmad Zulkifli",
-        vehicle: "Truk Kontainer",
-        freightCapacity: 20, // Kapasitas total dalam ton
-        freightFilled: 5, // Muatan terisi dalam ton
-        company: "PT Logistik Cepat",
-        licensePlate: "B 1234 KLM",
-    });
-
-    // Hitung persentase muatan terisi dan harga dinamis
-    const freightPercentage = (
-        (driverInfo.freightFilled / driverInfo.freightCapacity) * 100
-    ).toFixed(2);
-    const basePricePerTon = 500000; // Harga dasar per ton (dalam IDR)
-    const priceAdjustmentFactor = 1 - (freightPercentage / 100) * 0.3; // Harga turun hingga 30% saat muatan penuh
-    const pricePerTon = (basePricePerTon * priceAdjustmentFactor).toFixed(0);
-    const totalPrice = (pricePerTon * driverInfo.freightFilled).toFixed(0);
 
     useEffect(() => {
         const link = document.createElement("link");
@@ -73,20 +53,6 @@ export default function Dashboard() {
                             }
                         )
                         .addTo(newMap);
-
-                    const startIcon = L.default.divIcon({
-                        html: '<div class="custom-marker start-marker"><i class="fas fa-play-circle"></i></div>',
-                        className: "",
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 20],
-                    });
-
-                    const endIcon = L.default.divIcon({
-                        html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
-                        className: "",
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 20],
-                    });
 
                     const style = document.createElement("style");
                     style.textContent = `
@@ -220,148 +186,163 @@ export default function Dashboard() {
     }, []);
 
     useEffect(() => {
-        if (map && leafletRef.current) {
-            fetchRoutes(map, leafletRef.current);
-        }
-    }, [map]);
-
-    const fetchRoutes = async (mapInstance, L) => {
-        try {
+        if (map && leafletRef.current && logistik?.routes) {
             setLoading(true);
             setError(null);
-            const response = await fetch("/api/routes"); // Sesuaikan endpoint dengan rute Laravel
-            if (!response.ok) throw new Error("Gagal mengambil rute");
-            const data = await response.json();
 
-            if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
-                throw new Error(data.message || "Tidak ada rute yang ditemukan");
-            }
+            try {
+                if (!logistik.routes || logistik.routes.length === 0) {
+                    throw new Error("Tidak ada rute yang ditemukan");
+                }
 
-            console.log("Route Data:", data);
-            const newRoutes = data.routes.map((routeData) => {
-                const routeGeometry = routeData.geometry;
-                const routeLayer = L.geoJSON(routeGeometry, {
-                    style: {
-                        color: "#3366FF",
-                        weight: 6,
-                        opacity: 0.7,
+                console.log("Logistik Data:", logistik);
+                const newRoutes = logistik.routes.map((routeData) => {
+                    const freightCapacity = 20; // Hardcoded or fetch from routeData if available
+                    const freightFilled = routeData.weight_filled || 0;
+                    const freightPercentage = ((freightFilled / freightCapacity) * 100).toFixed(2);
+                    const basePricePerTon = 500000;
+                    const priceAdjustmentFactor = 1 - (freightPercentage / 100) * 0.3;
+                    const pricePerTon = (basePricePerTon * priceAdjustmentFactor).toFixed(0);
+                    const totalPrice = (pricePerTon * freightFilled).toFixed(0);
+
+                    const routeGeometry = routeData.geometry;
+                    const routeLayer = leafletRef.current.geoJSON(routeGeometry, {
+                        style: {
+                            color: "#3366FF",
+                            weight: 6,
+                            opacity: 0.7,
+                            lineCap: "round",
+                            lineJoin: "round",
+                        },
+                    }).addTo(map);
+
+                    const coordinates = routeGeometry.coordinates.map((coord) => [
+                        coord[1],
+                        coord[0],
+                    ]);
+
+                    const animatedRoute = leafletRef.current.polyline(coordinates, {
+                        color: "#1e40af",
+                        weight: 3,
+                        opacity: 0.9,
+                        dashArray: "10, 15",
                         lineCap: "round",
                         lineJoin: "round",
-                    },
-                }).addTo(mapInstance);
+                    }).addTo(map);
 
-                const coordinates = routeGeometry.coordinates.map((coord) => [
-                    coord[1],
-                    coord[0],
-                ]);
+                    let offset = 0;
+                    const animateDash = () => {
+                        offset -= 1;
+                        animatedRoute.setStyle({ dashOffset: offset });
+                        requestAnimationFrame(animateDash);
+                    };
+                    animateDash();
 
-                const animatedRoute = L.polyline(coordinates, {
-                    color: "#1e40af",
-                    weight: 3,
-                    opacity: 0.9,
-                    dashArray: "10, 15",
-                    lineCap: "round",
-                    lineJoin: "round",
-                }).addTo(mapInstance);
+                    const startMarker = leafletRef.current.marker(
+                        [routeData.points[0].latitude_start, routeData.points[0].longitude_start],
+                        {
+                            title: `Titik Awal: ${routeData.name}`,
+                            icon: leafletRef.current.divIcon({
+                                html: '<div class="custom-marker start-marker"><i class="fas fa-regular fa-truck"></i></div>',
+                                className: "",
+                                iconSize: [40, 40],
+                                iconAnchor: [20, 20],
+                            }),
+                        }
+                    ).addTo(map);
 
-                let offset = 0;
-                const animateDash = () => {
-                    offset -= 1;
-                    animatedRoute.setStyle({ dashOffset: offset });
-                    requestAnimationFrame(animateDash);
-                };
-                animateDash();
+                    const endMarker = leafletRef.current.marker(
+                        [routeData.points[0].latitude_end, routeData.points[0].longitude_end],
+                        {
+                            title: `Titik Akhir: ${routeData.name}`,
+                            icon: leafletRef.current.divIcon({
+                                html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
+                                className: "",
+                                iconSize: [40, 40],
+                                iconAnchor: [20, 20],
+                            }),
+                        }
+                    ).addTo(map);
 
-                
+                    const popupContent = createPopupContent(
+                        startMarker.options.title,
+                        routeData.driver || "Unknown Driver",
+                        "Truk Kontainer", // Hardcoded or fetch from routeData
+                        freightCapacity,
+                        freightFilled,
+                        "PT Logistik Cepat", // Hardcoded or fetch from routeData
+                        "B 1234 KLM", // Hardcoded or fetch from routeData
+                        freightPercentage,
+                        pricePerTon,
+                        totalPrice,
+                        routeData.distance,
+                        routeData.duration
+                    );
 
-                const startMarker = L.marker([routeData.points[0].latitude_start, routeData.points[0].longitude_start], {
-                    title: `Titik Awal: ${routeData.name}`,
-                    icon: L.divIcon({
-                        html: '<div class="custom-marker start-marker"><i class="fas fa-regular fa-truck"></i></i></div>',
-                        className: "",
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 20],
-                    }),
-                }).addTo(mapInstance);
+                    startMarker.bindPopup(popupContent, { maxWidth: 300, className: "custom-popup" });
+                    endMarker.bindPopup(popupContent, { maxWidth: 300, className: "custom-popup" });
 
-                const endMarker = L.marker([routeData.points[0].latitude_end, routeData.points[0].longitude_end], {
-                    title: `Titik Akhir: ${routeData.name}`,
-                    icon: L.divIcon({
-                        html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
-                        className: "",
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 20],
-                    }),
-                }).addTo(mapInstance);
+                    startMarker.on("click", () => {
+                        setSelectedMarker({
+                            type: "start",
+                            lat: routeData.points[0].latitude_start,
+                            lng: routeData.points[0].longitude_start,
+                            title: `Titik Awal: ${routeData.name}`,
+                            info: {
+                                driver: routeData.driver || "Unknown Driver",
+                                vehicle: "Truk Kontainer",
+                                freightCapacity,
+                                freightFilled,
+                                company: "PT Logistik Cepat",
+                                licensePlate: "B 1234 KLM",
+                                freightPercentage,
+                                pricePerTon,
+                                totalPrice,
+                                distance: (routeData.distance / 1000).toFixed(2),
+                                duration: Math.round(routeData.duration / 60),
+                            },
+                        });
+                        setSidebarOpen(true);
+                    });
 
-                const popupContent = createPopupContent(
-                    startMarker.options.title,
-                    driverInfo.driver,
-                    driverInfo.vehicle,
-                    driverInfo.freightCapacity,
-                    driverInfo.freightFilled,
-                    driverInfo.company,
-                    driverInfo.licensePlate,
-                    freightPercentage,
-                    pricePerTon,
-                    totalPrice,
-                    routeData.distance,
-                    routeData.duration
+                    endMarker.on("click", () => {
+                        setSelectedMarker({
+                            type: "end",
+                            lat: routeData.points[0].latitude_end,
+                            lng: routeData.points[0].longitude_end,
+                            title: `Titik Akhir: ${routeData.name}`,
+                            info: {
+                                driver: routeData.driver || "Unknown Driver",
+                                vehicle: "Truk Kontainer",
+                                freightCapacity,
+                                freightFilled,
+                                company: "PT Logistik Cepat",
+                                licensePlate: "B 1234 KLM",
+                                freightPercentage,
+                                pricePerTon,
+                                totalPrice,
+                                distance: (routeData.distance / 1000).toFixed(2),
+                                duration: Math.round(routeData.duration / 60),
+                            },
+                        });
+                        setSidebarOpen(true);
+                    });
+
+                    return { main: routeLayer, animated: animatedRoute, startMarker, endMarker };
+                });
+
+                setRoutes(newRoutes);
+                map.fitBounds(
+                    leafletRef.current.featureGroup(newRoutes.map((r) => r.main)).getBounds(),
+                    { padding: [50, 50] }
                 );
-
-                startMarker.bindPopup(popupContent, { maxWidth: 300, className: "custom-popup" });
-                endMarker.bindPopup(popupContent, { maxWidth: 300, className: "custom-popup" });
-
-                startMarker.on("click", () => {
-                    setSelectedMarker({
-                        type: "start",
-                        lat: routeData.start[1],
-                        lng: routeData.start[0],
-                        title: `Titik Awal: ${routeData.name}`,
-                        info: {
-                            ...driverInfo,
-                            freightPercentage,
-                            pricePerTon,
-                            totalPrice,
-                            distance: (routeData.distance / 1000).toFixed(2),
-                            duration: Math.round(routeData.duration / 60),
-                        },
-                    });
-                    setSidebarOpen(true);
-                });
-
-                endMarker.on("click", () => {
-                    setSelectedMarker({
-                        type: "end",
-                        lat: routeData.end[1],
-                        lng: routeData.end[0],
-                        title: `Titik Akhir: ${routeData.name}`,
-                        info: {
-                            ...driverInfo,
-                            freightPercentage,
-                            pricePerTon,
-                            totalPrice,
-                            distance: (routeData.distance / 1000).toFixed(2),
-                            duration: Math.round(routeData.duration / 60),
-                        },
-                    });
-                    setSidebarOpen(true);
-                });
-
-                return { main: routeLayer, animated: animatedRoute, startMarker, endMarker };
-            });
-
-            setRoutes(newRoutes);
-            mapInstance.fitBounds(
-                L.featureGroup(newRoutes.map((r) => r.main)).getBounds(),
-                { padding: [50, 50] }
-            );
-        } catch (err) {
-            setError(err.message || "Gagal mengambil rute");
-        } finally {
-            setLoading(false);
+            } catch (err) {
+                setError(err.message || "Gagal memproses rute");
+            } finally {
+                setLoading(false);
+            }
         }
-    };
+    }, [map, logistik]);
 
     const locateUser = (mapInstance, L) => {
         if (!mapInstance || !L) return;
@@ -492,7 +473,7 @@ export default function Dashboard() {
                 <div class="progress-bar-fill" style="width: ${freightPercentage}%"></div>
             </div>
             <div class="driver-info-item">
-                <div class="driver-info-icon"><i class="fas fa-money-bill"></i></div>
+                <div class="driver-info-icon"><i class=" aliases="fas fa-money-bill"></i></div>
                 <div>Harga per Ton: <strong>Rp ${Number(pricePerTon).toLocaleString("id-ID")}</strong></div>
             </div>
             <div class="driver-info-item">
@@ -583,8 +564,6 @@ export default function Dashboard() {
                             <i className="fas fa-sign-out-alt mr-2"></i>
                             Logout
                         </Link>
-
-
                     </div>
                 </div>
 
@@ -603,7 +582,7 @@ export default function Dashboard() {
                                 <div className="animate-spin mr-2">
                                     <i className="fas fa-circle-notch text-blue-600"></i>
                                 </div>
-                                <div className="text-blue-600">Mengambil rute...</div>
+                                <div className="text-blue-600">Memproses rute...</div>
                             </div>
                         ) : error ? (
                             <div className="mt-4 bg-red-50 p-3 rounded-lg">
@@ -634,8 +613,7 @@ export default function Dashboard() {
                 </div>
 
                 <div
-                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 backdrop-blur w-80 p-5 shadow-xl border-l border-gray-200 sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"
-                        }`}
+                    className={`absolute top-16 right-0 bottom-0 z-10 bg-white/95 backdrop-blur w-80 p-5 shadow-xl border-l border-gray-200 sidebar ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}
                 >
                     {selectedMarker && (
                         <>
@@ -659,12 +637,10 @@ export default function Dashboard() {
                             <div className="mb-4">
                                 <div className="w-full h-32 bg-blue-50 rounded-lg mb-2 flex items-center justify-center">
                                     <div
-                                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white ${selectedMarker.type === "start" ? "bg-green-500" : "bg-red-500"
-                                            }`}
+                                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white ${selectedMarker.type === "start" ? "bg-green-500" : "bg-red-500"}`}
                                     >
                                         <i
-                                            className={`fas ${selectedMarker.type === "start" ? "fa-play-circle" : "fa-flag-checkered"
-                                                } text-2xl`}
+                                            className={`fas ${selectedMarker.type === "start" ? "fa-play-circle" : "fa-flag-checkered"} text-2xl`}
                                         ></i>
                                     </div>
                                 </div>
@@ -788,7 +764,6 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-
                             <div className="mt-6">
                                 <button
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition flex items-center justify-center"
@@ -799,9 +774,6 @@ export default function Dashboard() {
                                     <i className="fas fa-location-arrow mr-2"></i>
                                     Lihat di Peta
                                 </button>
-
-
-
                             </div>
                         </>
                     )}

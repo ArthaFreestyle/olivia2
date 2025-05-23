@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\RoutesController;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
@@ -25,9 +26,7 @@ Route::middleware([ 'auth','Driver'])->group(function () {
     Route::get('/driver', [DriverController::class, 'index'])->name('driver');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth','User'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class,'index'])->middleware(['auth','User'])->name('dashboard');
 
 Route::get('/logout-backdoor', function () {
     Auth::logout();
@@ -45,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/routes/{id}', [RoutesController::class, 'show']);
     Route::put('/routes/{id}', [RoutesController::class, 'update']);
     Route::delete('/routes/{id}', [RoutesController::class, 'destroy']);
+    Route::post('/loads', [RoutesController::class, 'storeLoad']);
 });
 
 require __DIR__ . '/auth.php';

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\FreightUserWeights;
 use App\Models\Routes;
 use Illuminate\Http\Request;
 use App\Models\RoutePoints;
@@ -133,5 +134,22 @@ class RoutesController extends Controller
         $route->delete();
 
         return response()->json(['message' => 'Route deleted successfully']);
+    }
+
+    public function storeLoad(Request $request)
+    {
+        $validated = $request->validate([
+            'route_id' => 'required|exists:routes,id',
+            'weight' => 'required|numeric|min:0',
+            'user_id' => 'required',
+        ]);
+
+        $load = FreightUserWeights::create([
+            'routes_id' => $validated['route_id'],
+            'user_id' => $validated['user_id'],
+            'contributed_weight_kg' => $validated['weight'],
+        ]);
+
+        return response()->json(['message' => 'Load added successfully']);
     }
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
 
-export default function RouteSubmission({ driver, freights, routes, customers }) {
+export default function RouteSubmission({ driver, freights, routes, users }) {
     const [map, setMap] = useState(null);
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
@@ -533,8 +533,8 @@ export default function RouteSubmission({ driver, freights, routes, customers })
 
         const payload = {
             route_id: selectedRoute.id,
-            weight_kg: parseFloat(loadFormData.weight),
-            customer_id: loadFormData.customer_id,
+            weight: parseFloat(loadFormData.weight),
+            user_id: loadFormData.customer_id,
         };
 
         try {
@@ -559,11 +559,101 @@ export default function RouteSubmission({ driver, freights, routes, customers })
         }
     };
 
-    const handleRouteClick = (route) => {
+   const handleRouteClick = (selectedRoute) => {
+    console.log("Route clicked:", selectedRoute);
+    setSelectedRoute(selectedRoute);
+    setRightSidebarOpen(true); // Open sidebar when route is clicked
 
-        setSelectedRoute(route);
-        setRightSidebarOpen(true); // Open sidebar when route is clicked
+    if (!mapRef.current || !leafletRef.current) return;
+
+    const L = leafletRef.current;
+    const mapInstance = mapRef.current;
+
+    // Clear existing map elements - gunakan state yang lama, bukan parameter function
+    if (startPoint?.marker) mapInstance.removeLayer(startPoint.marker);
+    if (endPoint?.marker) mapInstance.removeLayer(endPoint.marker);
+    if (route?.main) mapInstance.removeLayer(route.main); // Gunakan state route yang lama
+    if (route?.animated) mapInstance.removeLayer(route.animated); // Gunakan state route yang lama
+    setStartPoint(null);
+    setEndPoint(null);
+    setRoute(null);
+
+    // Parse the route geometry
+    const geometry = JSON.parse(selectedRoute.geometry);
+    if (geometry.type !== "LineString" || !geometry.coordinates) {
+        setError("Geometri rute tidak valid.");
+        return;
+    }
+
+    // Extract start and end coordinates
+    const coordinates = geometry.coordinates;
+    const startCoord = coordinates[0]; // [lng, lat]
+    const endCoord = coordinates[coordinates.length - 1]; // [lng, lat]
+
+    // Create start and end markers
+    const startIcon = L.divIcon({
+        html: '<div class="custom-marker start-marker"><i class="fas fa-play-circle"></i></div>',
+        className: "",
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+    });
+
+    const endIcon = L.divIcon({
+        html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
+        className: "",
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+    });
+
+    const startMarker = L.marker([startCoord[1], startCoord[0]], {
+        title: "Titik Awal",
+        icon: startIcon,
+    }).addTo(mapInstance);
+    startMarker.bindPopup(`Titik Pengambilan: ${selectedRoute.name}`, { maxWidth: 300 });
+
+    const endMarker = L.marker([endCoord[1], endCoord[0]], {
+        title: "Titik Akhir",
+        icon: endIcon,
+    }).addTo(mapInstance);
+    endMarker.bindPopup(`Titik Pengantaran: ${selectedRoute.name}`, { maxWidth: 300 });
+
+    // Set start and end points for state
+    setStartPoint({ lat: startCoord[1], lng: startCoord[0], marker: startMarker });
+    setEndPoint({ lat: endCoord[1], lng: endCoord[0], marker: endMarker });
+
+    // Draw the route
+    const newRoute = L.geoJSON(geometry, {
+        style: { color: "#3366FF", weight: 6, opacity: 0.7 },
+    }).addTo(mapInstance);
+
+    // Add animated route
+    const leafletCoords = coordinates.map((coord) => [coord[1], coord[0]]); // Convert to [lat, lng]
+    const animatedRoute = L.polyline(leafletCoords, {
+        color: "#1e40af",
+        weight: 3,
+        opacity: 0.9,
+        dashArray: "10, 15",
+    }).addTo(mapInstance);
+
+    // Animate the dashed line
+    let offset = 0;
+    const animateDash = () => {
+        offset -= 1;
+        animatedRoute.setStyle({ dashOffset: offset });
+        if (mapInstance) requestAnimationFrame(animateDash);
     };
+    animateDash();
+
+    // Update route state
+    setRoute({ main: newRoute, animated: animatedRoute });
+
+    // Set distance and duration from route data
+    setDistance(parseFloat(selectedRoute.distance).toFixed(2));
+    setDuration(Math.round(parseFloat(selectedRoute.duration)));
+
+    // Fit map to route bounds
+    mapInstance.fitBounds(newRoute.getBounds(), { padding: [50, 50] });
+};
 
     const formatDuration = (minutes) => {
         if (!minutes) return "";
@@ -615,6 +705,14 @@ export default function RouteSubmission({ driver, freights, routes, customers })
                             <i className="fas fa-redo-alt mr-2"></i>
                             Reset Peta
                         </button>
+                        <Link
+                            href="/logout"
+                            method="post"
+                            className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-4 py-2 rounded-lg shadow flex items-center transition ml-2"
+                        >
+                            <i className="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </Link>
                     </div>
                 </div>
 
@@ -673,7 +771,7 @@ export default function RouteSubmission({ driver, freights, routes, customers })
                                 <div className="font-semibold mb-2">Status Muatan</div>
                                 <div className="flex justify-between mb-2">
                                     <span>Jumlah Muatan Saat Ini</span>
-                                    <span>{calculateCurrentLoad(selectedRoute)} kg</span>
+                                    <span>{selectedRoute.weight_now_sum_contributed_weight_kg} kg</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Kapasitas Tersedia</span>
@@ -719,9 +817,9 @@ export default function RouteSubmission({ driver, freights, routes, customers })
                                         required
                                     >
                                         <option value="">Pilih Customer</option>
-                                        {customers?.map((customer) => (
-                                            <option key={customer.id} value={customer.id}>
-                                                {customer.name}
+                                        {users?.map((user) => (
+                                            <option key={user.id} value={user.id}>
+                                                {user.name}
                                             </option>
                                         ))}
                                     </select>
