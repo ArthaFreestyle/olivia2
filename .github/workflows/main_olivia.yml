@@ -30,6 +30,11 @@ jobs:
            echo "ASSET_URL=https://olivia-g4htendadecwc7fu.canadacentral-01.azurewebsites.net" >> .env
            npm ci
            npm run build
+
+      - name: Build Vite assets
+        env:
+          VITE_APP_URL: ${{ secrets.APP_URL }}
+        run: npm run build
       - name: Prepare files for deployment
         run: |
           mkdir -p deploy
@@ -58,6 +63,7 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
+          php artisan filament:optimize
 
   deploy:
     runs-on: ubuntu-latest
