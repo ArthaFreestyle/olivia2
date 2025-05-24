@@ -27,13 +27,14 @@ jobs:
       - name: Install and build frontend assets
         run: |
            echo "APP_URL=https://olivia-g4htendadecwc7fu.canadacentral-01.azurewebsites.net" >> .env
-           echo "ASSET_URL=https://olivia-g4htendadecwc7fu.canadacentral-01.azurewebsites.net/build" >> .env
+           echo "ASSET_URL=https://olivia-g4htendadecwc7fu.canadacentral-01.azurewebsites.net" >> .env
            npm ci
            npm run build
       - name: Prepare files for deployment
         run: |
           mkdir -p deploy
           cp -r public/* deploy/
+          cp -r public/build deploy/build
           cp -r vendor deploy/vendor
           cp -r bootstrap deploy/bootstrap
           cp -r storage deploy/storage
