@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy PHP app to Azure Web App - Olivia
+name: Build and deploy Laravel app to Azure Web App - Olivia
 
 on:
   push:
@@ -13,33 +10,50 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP with Composer
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+          extensions: mbstring, pdo_pgsql
+          tools: composer
 
-      - name: Check if composer.json exists
-        id: check_files
-        uses: andstor/file-existence-action@v1
+      - name: Install PHP dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
         with:
-          files: 'composer.json'
+          node-version: '18'
 
-      - name: Run composer install if composer.json exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
+      - name: Install and build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare files for deployment
+        run: |
+          mkdir deploy
+          cp -r app bootstrap config database lang public resources routes storage artisan composer.* deploy/
+          cp -r vendor deploy/vendor
+          cp .env deploy/.env || true
+          cp public/index.php deploy/index.php
+          cp public/.htaccess deploy/.htaccess || true
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: |
+          cd deploy
+          zip -r ../release.zip .
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: php-app
+          name: laravel-app
           path: release.zip
 
   deploy:
@@ -49,18 +63,18 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+      id-token: write
+      contents: read
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: php-app
+          name: laravel-app
 
-      - name: Unzip artifact for deployment
+      - name: Unzip artifact
         run: unzip release.zip
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -68,11 +82,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_FFC7F5363D2740CD865FF0C3BBE620EC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A54DED14A8064FB6ABAD6AEF714913BB }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'Olivia'
           slot-name: 'Production'
           package: .
-          
