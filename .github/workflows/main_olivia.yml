@@ -37,6 +37,7 @@ jobs:
           cp -r storage deploy/storage
           cp -r resources deploy/resources
           cp artisan deploy/artisan
+          cp vite.config.js deploy/vite.config.js
           cp .env deploy/.env || true
           cp web.config deploy/web.config
       - name: Zip artifact for deployment
