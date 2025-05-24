@@ -48,10 +48,6 @@ jobs:
         with:
           name: laravel-app
           path: release.zip
-      - name: Adjust public/index.php for deployment
-        run: |
-          sed -i 's|__DIR__.\'\.\./vendor|__DIR__.'/vendor|g' public/index.php
-          sed -i 's|__DIR__.\'\.\./bootstrap|__DIR__.'/bootstrap|g' public/index.php
   deploy:
     runs-on: ubuntu-latest
     needs: build
