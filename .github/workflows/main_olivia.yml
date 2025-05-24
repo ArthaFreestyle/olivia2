@@ -31,11 +31,12 @@ jobs:
       - name: Prepare files for deployment
         run: |
           mkdir -p deploy
-          cp -r app bootstrap config database resources routes storage artisan composer.* deploy/
-          cp -r public deploy/public
-          cp -r vendor deploy/vendor
-          [ -d lang ] && cp -r lang deploy/lang || true
-          [ -f .env ] && cp .env deploy/.env || true
+           cp -r app bootstrap config database resources routes storage artisan composer.* deploy/
+            cp -r public deploy/public
+            cp -r vendor deploy/vendor
+            [ -f .env ] && cp .env deploy/.env || true
+            [ -d lang ] && cp -r lang deploy/lang || true
+            [ -f web.config ] && cp web.config deploy/web.config || true
       - name: Zip artifact for deployment
         run: |
           cd deploy
