@@ -43,7 +43,7 @@ jobs:
           [ -d lang ] && cp -r lang public/lang || true
           [ -d vendor ] && cp -r vendor public/vendor || true
           [ -f .env ] && cp .env public/.env || true
-          [ -f public/.htaccess ] && cp public/.htaccess public/.htaccess || true
+          [ -f public/.htaccess ] && cp public/.htaccess || true
           shell: /usr/bin/bash -e {0}
           env:
             COMPOSER_PROCESS_TIMEOUT: 0
