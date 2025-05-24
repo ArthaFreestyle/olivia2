@@ -38,18 +38,18 @@ jobs:
 
       - name: Prepare files for deployment
         run: |
-          mkdir deploy
-          cp -r app bootstrap config database public resources routes storage artisan composer.* deploy/
-          [ -d lang ] && cp -r lang deploy/lang || true
-          [ -d vendor ] && cp -r vendor deploy/vendor || true
-          [ -f .env ] && cp .env deploy/.env || true
-          cp public/index.php deploy/index.php
-          [ -f public/.htaccess ] && cp public/.htaccess deploy/.htaccess || true
+          mkdir -p public
+          cp -r app bootstrap config database public resources routes storage artisan composer.* public/
+          [ -d lang ] && cp -r lang public/lang || true
+          [ -d vendor ] && cp -r vendor public/vendor || true
+          [ -f .env ] && cp .env public/.env || true
+          cp public/index.php public/index.php
+          [ -f public/.htaccess ] && cp public/.htaccess public/.htaccess || true
 
 
       - name: Zip artifact for deployment
         run: |
-          cd deploy
+          cd public
           zip -r ../release.zip .
 
       - name: Upload artifact
