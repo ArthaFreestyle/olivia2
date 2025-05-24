@@ -33,8 +33,12 @@ jobs:
           mkdir -p deploy
           cp -r public/* deploy/
           cp -r vendor deploy/vendor
+          cp -r bootstrap deploy/bootstrap
+          cp -r storage deploy/storage
+          cp -r resources deploy/resources
+          cp artisan deploy/artisan
+          cp .env deploy/.env || true
           cp web.config deploy/web.config
-          [ -f .env ] && cp .env deploy/.env || true
       - name: Zip artifact for deployment
         run: |
           cd deploy
@@ -44,6 +48,10 @@ jobs:
         with:
           name: laravel-app
           path: release.zip
+      - name: Adjust public/index.php for deployment
+        run: |
+          sed -i 's|__DIR__.\'\.\./vendor|__DIR__.'/vendor|g' public/index.php
+          sed -i 's|__DIR__.\'\.\./bootstrap|__DIR__.'/bootstrap|g' public/index.php
   deploy:
     runs-on: ubuntu-latest
     needs: build
