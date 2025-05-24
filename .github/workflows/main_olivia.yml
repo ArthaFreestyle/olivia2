@@ -39,12 +39,16 @@ jobs:
       - name: Prepare files for deployment
         run: |
           mkdir -p public
-          cp -r app bootstrap config database public resources routes storage artisan composer.* public/
+          cp -r app bootstrap config database resources routes storage artisan composer.* public/
           [ -d lang ] && cp -r lang public/lang || true
           [ -d vendor ] && cp -r vendor public/vendor || true
           [ -f .env ] && cp .env public/.env || true
           cp public/index.php public/index.php
           [ -f public/.htaccess ] && cp public/.htaccess public/.htaccess || true
+        env:
+          COMPOSER_PROCESS_TIMEOUT: 0
+          COMPOSER_NO_INTERACTION: 1
+          COMPOSER_NO_AUDIT: 1
 
 
       - name: Zip artifact for deployment
