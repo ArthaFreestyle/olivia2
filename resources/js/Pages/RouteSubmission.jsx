@@ -2,6 +2,8 @@ import { Head, Link } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
+axios.defaults.baseURL = import.meta.env.VITE_APP_URL || '/';
+axios.defaults.withCredentials = true;
 
 export default function RouteSubmission({ driver, freights, routes, users }) {
     const [map, setMap] = useState(null);
