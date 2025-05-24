@@ -30,20 +30,15 @@ jobs:
           npm run build
       - name: Prepare files for deployment
         run: |
-          mkdir -p public
-          cp -r app bootstrap config database resources routes storage artisan composer.* public/
-          [ -d lang ] && cp -r lang public/lang || true
-          [ -d vendor ] && cp -r vendor public/vendor || true
-          [ -f .env ] && cp .env public/.env || true
-          [ -f .htaccess ] && cp .htaccess public/.htaccess || true
-        shell: /usr/bin/bash -e {0}
-        env:
-          COMPOSER_PROCESS_TIMEOUT: 0
-          COMPOSER_NO_INTERACTION: 1
-          COMPOSER_NO_AUDIT: 1
+          mkdir -p deploy
+          cp -r app bootstrap config database resources routes storage artisan composer.* .htaccess deploy/
+          cp -r public deploy/public
+          cp -r vendor deploy/vendor
+          [ -d lang ] && cp -r lang deploy/lang || true
+          [ -f .env ] && cp .env deploy/.env || true
       - name: Zip artifact for deployment
         run: |
-          cd public
+          cd deploy
           zip -r ../release.zip .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
