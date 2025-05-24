@@ -48,14 +48,12 @@ jobs:
         with:
           name: laravel-app
           path: release.zip
-      - name: Create dummy SQLite DB
+
+      - name: Cache Laravel config & routes
         run: |
-          mkdir -p database
-          touch database/database.sqlite
-      - name: Clear Laravel cache
-        run: |
-          php artisan config:clear
-          php artisan cache:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
 
   deploy:
     runs-on: ubuntu-latest
