@@ -10,7 +10,4 @@ export default defineConfig({
         }),
         react(),
     ],
-    server: {
-        https: process.env.NODE_ENV === 'production' ? true : false,
-    },
 });
