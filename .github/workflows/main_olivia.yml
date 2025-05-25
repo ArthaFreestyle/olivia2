@@ -40,6 +40,7 @@ jobs:
       - name: Cache Laravel config & routes
         run: |
           php artisan filament:optimize
+          php artisan route:cache
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
