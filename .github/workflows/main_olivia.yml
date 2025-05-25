@@ -33,9 +33,6 @@ jobs:
         env:
           VITE_APP_URL: ${{ secrets.APP_URL }}
         run: npm run build
-      - name: Prepare files for deployment
-        run: |
-          cp web.config web.config
       - name: Zip artifact for deployment
         run: |
           zip -r ../release.zip .
@@ -47,9 +44,6 @@ jobs:
 
       - name: Cache Laravel config & routes
         run: |
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
           php artisan filament:optimize
 
   deploy:
