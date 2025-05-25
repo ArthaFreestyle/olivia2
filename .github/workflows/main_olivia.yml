@@ -35,20 +35,9 @@ jobs:
         run: npm run build
       - name: Prepare files for deployment
         run: |
-          mkdir -p deploy
-          cp -r public/* deploy/
-          cp -r public/build deploy/build
-          cp -r vendor deploy/vendor
-          cp -r bootstrap deploy/bootstrap
-          cp -r storage deploy/storage
-          cp -r resources deploy/resources
-          cp artisan deploy/artisan
-          cp vite.config.js deploy/vite.config.js
-          cp .env deploy/.env || true
-          cp web.config deploy/web.config
+          cp web.config web.config
       - name: Zip artifact for deployment
         run: |
-          cd deploy
           zip -r ../release.zip .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
