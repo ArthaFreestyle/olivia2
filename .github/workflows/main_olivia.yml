@@ -28,9 +28,7 @@ jobs:
         run: |
            echo "APP_URL=https://olivia-g4htendadecwc7fu.canadacentral-01.azurewebsites.net" >> .env
            echo "ASSET_URL=https://olivia-g4htendadecwc7fu.canadacentral-01.azurewebsites.net" >> .env
-           npm ci
-           npm run build
-
+           npm i --legacy-peer-deps
       - name: Build Vite assets
         env:
           VITE_APP_URL: ${{ secrets.APP_URL }}
