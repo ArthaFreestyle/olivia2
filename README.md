@@ -62,32 +62,36 @@ Jangan jalankan php artisan migrate karena proyek ini **menggunakan Supabase seb
 
 1. **Clone Repositori**
    
-bash
+```bash
    git clone https://github.com/ArthaFreestyle/olivia2.git
    cd olivia2
+```
 
 2. **Install Dependency PHP**
 
-bash
+```bash
    composer install
    composer update
+```
 
 3. **Install Dependency JavaScript**
 (Gunakan opsi --legacy-peer-deps untuk menghindari konflik versi dependency)
 
-bash
+```bash
    npm install --legacy--peer-deps
+```
 
 4. **Build Asset Frontend**
 
-bash
+```bash
    npm run build
+```
 
 5. **Jalankan Laravel**
 
-bash
+```bash
    php artisan serve
-
+```
 
 ### Catatan Tambahan
 1. File .env sudah tersedia di repository, jadi tidak perlu melakukan konfigurasi manual untuk environment variable.
