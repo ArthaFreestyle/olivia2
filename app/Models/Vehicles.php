@@ -8,13 +8,13 @@ use App\Models\Routes;
 
 class Vehicles extends Model
 {
-     protected $fillable = ['type', 'plate_number', 'capacity_kg'];
+     protected $fillable = ['type', 'plate_number','owner'];
 
     public function routes(): HasMany
     {
         return $this->hasMany(Routes::class);
     }
-    public function owner()
+    public function owned()
     {
         return $this->belongsTo(User::class, 'owner');
     }

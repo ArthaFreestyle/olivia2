@@ -29,11 +29,8 @@ class VehiclesResource extends Resource
                 Forms\Components\TextInput::make('plate_number')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('capacity_kg')
-                    ->required()
-                    ->numeric(),
                 Forms\Components\Select::make('owner')
-                    ->relationship('owner', 'name')
+                    ->relationship('owned', 'name')
                     ->required(),
             ]);
     }
@@ -46,9 +43,6 @@ class VehiclesResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('plate_number')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('capacity_kg')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -57,7 +51,7 @@ class VehiclesResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('owner.name')
+                Tables\Columns\TextColumn::make('owned.name')
                     ->label('Owner')
                     ->searchable()
                     ->sortable(),
