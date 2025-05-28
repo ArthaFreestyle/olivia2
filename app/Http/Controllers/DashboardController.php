@@ -46,8 +46,9 @@ class DashboardController extends Controller
                     'vehicle' => $route->vehicle ? $route->vehicle->name : 'Truk Kontainer',
                     'license_plate' => $route->vehicle ? $route->vehicle->license_plate : 'B 1234 KLM',
                     'company' => 'PT Logistik Cepat', // Hardcoded or fetch from related model
-                    'freight_capacity' => $route->vehicle && $route->vehicle->max_weight ? $route->vehicle->max_weight / 1000 : 20, // Convert kg to tons, default to 20
-                    'weight_filled' => $route->weight_now_sum_contributed_weight_kg ? $route->weight_now_sum_contributed_weight_kg / 1000 : 0 // Convert kg to tons
+                    'max_weight' => $route->max_weight, 
+                    'weight_filled' => $route->weight_now_sum_contributed_weight_kg, // Convert kg to tons
+                    'pricing' => $route->pricing
                 ];
             });
 

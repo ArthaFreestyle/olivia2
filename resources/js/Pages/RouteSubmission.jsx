@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 axios.defaults.baseURL = import.meta.env.VITE_APP_URL || '/';
 axios.defaults.withCredentials = true;
 
-export default function RouteSubmission({ driver, freights, routes, users }) {
+export default function RouteSubmission({ driver, freights, routes, users,message }) {
     const [map, setMap] = useState(null);
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
@@ -512,7 +512,7 @@ export default function RouteSubmission({ driver, freights, routes, users }) {
                 axios.defaults.headers.common["X-CSRF-TOKEN"] = token;
             }
             const response = await axios.post("/routes", payload);
-            alert(response.data.message);
+            alert(message);
             resetMap();
         } catch (err) {
             if (err.response?.status === 422) {
@@ -886,7 +886,7 @@ export default function RouteSubmission({ driver, freights, routes, users }) {
                                         className="input-field"
                                         required
                                     >
-                                        <option value="">Pilih Freight</option>
+                                        <option value="">Pilih Max Muatan</option>
                                         {freights?.map((freight) => (
                                             <option key={freight.id} value={freight.id}>
                                                 {freight.max_weight_kg} kg
@@ -962,13 +962,17 @@ export default function RouteSubmission({ driver, freights, routes, users }) {
                                         {error}
                                     </div>
                                 )}
-                                <button
-                                    type="submit"
-                                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                                    disabled={loading || !startPoint || !endPoint || !geometry}
-                                >
-                                    Simpan Rute
-                                </button>
+<button
+  type="submit"
+  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex justify-center items-center"
+  disabled={loading || !startPoint || !endPoint || !geometry}
+>
+  {loading ? (
+    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  ) : (
+    "Simpan Rute"
+  )}
+</button>
                             </form>
                         </>
                     )}

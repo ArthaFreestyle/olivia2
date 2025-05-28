@@ -40,12 +40,12 @@ class RoutesController extends Controller
                 'pricing' => 'required|numeric|min:0', // Ensure non-negative pricing
             ]);
 
-
+            $max = Freights::where('id', $request->input('freight_id'))->first();
             // Create route
             $route = Routes::create([
                 'driver_id' => $request->input('driver_id'),
                 'vehicle_id' => $request->input('vehicle_id'),
-                'max_weight' => $request->input('freight_id'),
+                'max_weight' => $max->max_weight_kg,
                 'name' => $request->input('name'),
                 'distance' => $request->input('distance'), // Convert meters to km
                 'duration' => $request->input('duration'), // Convert seconds to minutes

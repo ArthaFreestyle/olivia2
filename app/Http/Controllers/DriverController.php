@@ -46,7 +46,7 @@ class DriverController extends Controller
         $route = Routes::create([
             'driver_id' => $request->input('driver_id'),
             'vehicle_id' => $request->input('vehicle_id'),
-            'max_weight' => $request->input('freight_id'),
+            'max_weight' => Freights::where('id', $request->input('freight_id'))->get(),
             'name' => $request->input('name'),
             'distance' => $request->input('distance') / 1000, // Convert meters to km
             'duration' => $request->input('duration') / 60,   // Convert seconds to minutes

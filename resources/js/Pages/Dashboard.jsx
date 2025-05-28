@@ -165,7 +165,7 @@ export default function Dashboard({ logistik }) {
                         onAdd: function () {
                             const container = L.default.DomUtil.create("div", "locate-control");
                             const btn = L.default.DomUtil.create("div", "locate-btn", container);
-                            btn.innerHTML = '<i class="fas fa-location-crosshairs"></i>';
+                            btn.innerHTML = '<i className="fas fa-location-crosshairs"></i>';
 
                             L.default.DomEvent.on(btn, "click", () => locateUser(newMap, L.default));
 
@@ -185,6 +185,29 @@ export default function Dashboard({ logistik }) {
         };
     }, []);
 
+    const calculatePooledPrice = (basePricePerKg, freightFilledTons, freightCapacityKg) => {
+        const freightFilledKg = freightFilledTons ; // Convert tons to kg
+        const freightPercentage = (freightFilledKg / freightCapacityKg) * 100;
+        let discountFactor = 1;
+
+        // Tiered discount based on freight percentage
+        if (freightPercentage <= 50) {
+            discountFactor = 0.95; // 5% discount
+        } else if (freightPercentage <= 75) {
+            discountFactor = 0.85; // 15% discount
+        } else if (freightPercentage <= 90) {
+            discountFactor = 0.75; // 25% discount
+        } else {
+            discountFactor = 0.65; // 35% discount
+        }
+
+        // Calculate price per kg with discount
+        const pricePerKg = Math.max(basePricePerKg * discountFactor, basePricePerKg * 0.7);
+        const totalPrice = (pricePerKg * freightFilledKg).toFixed(0);
+
+        return { pricePerKg: pricePerKg.toFixed(0), totalPrice, freightPercentage: freightPercentage.toFixed(2) };
+    };
+
     useEffect(() => {
         if (map && leafletRef.current && logistik?.routes) {
             setLoading(true);
@@ -197,13 +220,16 @@ export default function Dashboard({ logistik }) {
 
                 console.log("Logistik Data:", logistik);
                 const newRoutes = logistik.routes.map((routeData) => {
-                    const freightCapacity = 20; // Hardcoded or fetch from routeData if available
-                    const freightFilled = routeData.weight_filled || 0;
-                    const freightPercentage = ((freightFilled / freightCapacity) * 100).toFixed(2);
-                    const basePricePerTon = 500000;
-                    const priceAdjustmentFactor = 1 - (freightPercentage / 100) * 0.3;
-                    const pricePerTon = (basePricePerTon * priceAdjustmentFactor).toFixed(0);
-                    const totalPrice = (pricePerTon * freightFilled).toFixed(0);
+                    const freightCapacity = routeData.max_weight; // in kg
+                    const freightFilled = routeData.weight_filled || 0; // in tons
+                    const basePricePerKg = routeData.pricing; // assumed per kg
+
+                    // Calculate pricing with pooling logic
+                    const { pricePerKg, totalPrice, freightPercentage } = calculatePooledPrice(
+                        basePricePerKg,
+                        freightFilled,
+                        freightCapacity
+                    );
 
                     const routeGeometry = routeData.geometry;
                     const routeLayer = leafletRef.current.geoJSON(routeGeometry, {
@@ -243,7 +269,7 @@ export default function Dashboard({ logistik }) {
                         {
                             title: `Titik Awal: ${routeData.name}`,
                             icon: leafletRef.current.divIcon({
-                                html: '<div class="custom-marker start-marker"><i class="fas fa-regular fa-truck"></i></div>',
+                                html: '<div class="custom-marker start-marker"><i class="fas fa-truck"></i></div>',
                                 className: "",
                                 iconSize: [40, 40],
                                 iconAnchor: [20, 20],
@@ -254,7 +280,7 @@ export default function Dashboard({ logistik }) {
                     const endMarker = leafletRef.current.marker(
                         [routeData.points[0].latitude_end, routeData.points[0].longitude_end],
                         {
-                            title: `Titik Akhir: ${routeData.name}`,
+                            title: `Nama Rute: ${routeData.name}`,
                             icon: leafletRef.current.divIcon({
                                 html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
                                 className: "",
@@ -267,13 +293,13 @@ export default function Dashboard({ logistik }) {
                     const popupContent = createPopupContent(
                         startMarker.options.title,
                         routeData.driver || "Unknown Driver",
-                        "Truk Kontainer", // Hardcoded or fetch from routeData
+                        routeData.vehicle || "Truk Kontainer",
                         freightCapacity,
                         freightFilled,
-                        "PT Logistik Cepat", // Hardcoded or fetch from routeData
-                        "B 1234 KLM", // Hardcoded or fetch from routeData
+                        "PT Logistik Cepat",
+                        routeData.license_plate || "B 1234 KLM",
                         freightPercentage,
-                        pricePerTon,
+                        pricePerKg,
                         totalPrice,
                         routeData.distance,
                         routeData.duration
@@ -283,20 +309,21 @@ export default function Dashboard({ logistik }) {
                     endMarker.bindPopup(popupContent, { maxWidth: 300, className: "custom-popup" });
 
                     startMarker.on("click", () => {
+                        console.log(routeData);
                         setSelectedMarker({
                             type: "start",
                             lat: routeData.points[0].latitude_start,
                             lng: routeData.points[0].longitude_start,
-                            title: `Titik Awal: ${routeData.name}`,
+                            title: `Nama Rute: ${routeData.name}`,
                             info: {
                                 driver: routeData.driver || "Unknown Driver",
-                                vehicle: "Truk Kontainer",
+                                vehicle: routeData.vehicle || "Truk Kontainer",
                                 freightCapacity,
                                 freightFilled,
                                 company: "PT Logistik Cepat",
-                                licensePlate: "B 1234 KLM",
+                                licensePlate: routeData.license_plate || "B 1234 KLM",
                                 freightPercentage,
-                                pricePerTon,
+                                pricing: pricePerKg,
                                 totalPrice,
                                 distance: (routeData.distance / 1000).toFixed(2),
                                 duration: Math.round(routeData.duration / 60),
@@ -310,16 +337,16 @@ export default function Dashboard({ logistik }) {
                             type: "end",
                             lat: routeData.points[0].latitude_end,
                             lng: routeData.points[0].longitude_end,
-                            title: `Titik Akhir: ${routeData.name}`,
+                            title: `Nama Rute: ${routeData.name}`,
                             info: {
                                 driver: routeData.driver || "Unknown Driver",
-                                vehicle: "Truk Kontainer",
+                                vehicle: routeData.vehicle || "Truk Kontainer",
                                 freightCapacity,
                                 freightFilled,
                                 company: "PT Logistik Cepat",
-                                licensePlate: "B 1234 KLM",
+                                licensePlate: routeData.license_plate || "B 1234 KLM",
                                 freightPercentage,
-                                pricePerTon,
+                                pricing: pricePerKg,
                                 totalPrice,
                                 distance: (routeData.distance / 1000).toFixed(2),
                                 duration: Math.round(routeData.duration / 60),
@@ -443,7 +470,7 @@ export default function Dashboard({ logistik }) {
         company,
         licensePlate,
         freightPercentage,
-        pricePerTon,
+        pricePerKg,
         totalPrice,
         distance,
         duration
@@ -463,7 +490,7 @@ export default function Dashboard({ logistik }) {
             </div>
             <div class="driver-info-item">
                 <div class="driver-info-icon"><i class="fas fa-weight-hanging"></i></div>
-                <div>Kapasitas: <strong>${freightCapacity} ton</strong></div>
+                <div>Kapasitas: <strong>${freightCapacity} Kg</strong></div>
             </div>
             <div class="driver-info-item">
                 <div class="driver-info-icon"><i class="fas fa-boxes"></i></div>
@@ -473,8 +500,8 @@ export default function Dashboard({ logistik }) {
                 <div class="progress-bar-fill" style="width: ${freightPercentage}%"></div>
             </div>
             <div class="driver-info-item">
-                <div class="driver-info-icon"><i class=" aliases="fas fa-money-bill"></i></div>
-                <div>Harga per Ton: <strong>Rp ${Number(pricePerTon).toLocaleString("id-ID")}</strong></div>
+                <div class="driver-info-icon"><i class="fas fa-money-bill"></i></div>
+                <div>Harga per Kg: <strong>Rp ${Number(pricePerKg).toLocaleString("id-ID")}</strong></div>
             </div>
             <div class="driver-info-item">
                 <div class="driver-info-icon"><i class="fas fa-wallet"></i></div>
@@ -599,7 +626,7 @@ export default function Dashboard({ logistik }) {
                                     <div key={index} className="flex items-center justify-between mb-2">
                                         <div className="flex items-center text-sm">
                                             <i className="fas fa-route text-gray-500 mr-2"></i>
-                                            <span>Rute {index + 1}</span>
+                                            <span>{route.endMarker.options.title}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -675,7 +702,7 @@ export default function Dashboard({ logistik }) {
                                         </div>
                                         <div>
                                             <div className="text-xs text-gray-500">Kapasitas</div>
-                                            <div className="font-medium">{selectedMarker.info.freightCapacity} ton</div>
+                                            <div className="font-medium">{selectedMarker.info.freightCapacity} Kg</div>
                                         </div>
                                     </div>
 
@@ -703,9 +730,9 @@ export default function Dashboard({ logistik }) {
                                             <i className="fas fa-money-bill"></i>
                                         </div>
                                         <div>
-                                            <div className="text-xs text-gray-500">Harga per Ton</div>
+                                            <div className="text-xs text-gray-500">Harga per Kg</div>
                                             <div className="font-medium">
-                                                Rp {Number(selectedMarker.info.pricePerTon).toLocaleString("id-ID")}
+                                                Rp {Number(selectedMarker.info.pricing).toLocaleString("id-ID")}
                                             </div>
                                         </div>
                                     </div>
