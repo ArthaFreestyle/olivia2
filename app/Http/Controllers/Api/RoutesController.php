@@ -10,6 +10,7 @@ use App\Models\RoutePoints;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\Freights;
+use Carbon\Carbon;
 
 class RoutesController extends Controller
 {
@@ -42,6 +43,8 @@ class RoutesController extends Controller
 
             $max = Freights::where('id', $request->input('freight_id'))->first();
             // Create route
+            $departureDateTime = $request->input('departure_date') . ' ' . $request->input('departure_time');
+            $jadwal = Carbon::parse($departureDateTime)->format('Y-m-d H:i:s');
             $route = Routes::create([
                 'driver_id' => $request->input('driver_id'),
                 'vehicle_id' => $request->input('vehicle_id'),
@@ -51,6 +54,7 @@ class RoutesController extends Controller
                 'duration' => $request->input('duration'), // Convert seconds to minutes
                 'geometry' => json_encode($request->input('geometry')), // Store as JSON
                 'pricing' => $request->input('pricing'), // Store as JSON
+                'Jadwal' => $jadwal
             ]);
 
             // Create route points

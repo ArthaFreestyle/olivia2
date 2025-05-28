@@ -48,7 +48,8 @@ class DashboardController extends Controller
                     'company' => 'PT Logistik Cepat', // Hardcoded or fetch from related model
                     'max_weight' => $route->max_weight, 
                     'weight_filled' => $route->weight_now_sum_contributed_weight_kg, // Convert kg to tons
-                    'pricing' => $route->pricing
+                    'pricing' => $route->pricing,
+                    'Jadwal' => $route->Jadwal
                 ];
             });
 

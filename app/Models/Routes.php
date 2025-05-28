@@ -12,7 +12,7 @@ class Routes extends Model
 {
     protected $fillable = [
         'driver_id', 'vehicle_id', 'max_weight', 'name',
-        'distance', 'duration', 'geometry','pricing',
+        'distance', 'duration', 'geometry','pricing','date','Jadwal'
     ];
 
     protected $casts = [

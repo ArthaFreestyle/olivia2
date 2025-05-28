@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 axios.defaults.baseURL = import.meta.env.VITE_APP_URL || '/';
 axios.defaults.withCredentials = true;
 
-export default function RouteSubmission({ driver, freights, routes, users,message }) {
+export default function RouteSubmission({ driver, freights, routes, users, message }) {
     const [map, setMap] = useState(null);
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
@@ -19,8 +19,8 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
     const [locatingUser, setLocatingUser] = useState(false);
-    const [selectedRoute, setSelectedRoute] = useState(null); // New state for selected route
-    const [loadFormData, setLoadFormData] = useState({ weight: "", customer_id: "" }); // Form data for adding load
+    const [selectedRoute, setSelectedRoute] = useState(null);
+    const [loadFormData, setLoadFormData] = useState({ weight: "", customer_id: "" });
     const leafletRef = useRef(null);
     const clickStage = useRef(0);
     const mapRef = useRef(null);
@@ -29,6 +29,8 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
         name: "",
         freight_id: "",
         pricing: "",
+        departure_date: "", // New field for departure date
+        departure_time: "", // New field for departure time
     });
 
     useEffect(() => {
@@ -457,9 +459,11 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
                 name: "",
                 freight_id: "",
                 pricing: "",
+                departure_date: "",
+                departure_time: "",
             });
-            setSelectedRoute(null); // Reset selected route
-            setLoadFormData({ weight: "", customer_id: "" }); // Reset load form
+            setSelectedRoute(null);
+            setLoadFormData({ weight: "", customer_id: "" });
             clickStage.current = 0;
             mapRef.current.setView([-6.2, 106.816666], 13);
         }
@@ -474,7 +478,7 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
             return;
         }
 
-        if (!formData.name || !formData.freight_id || !formData.pricing) {
+        if (!formData.name || !formData.freight_id || !formData.pricing || !formData.departure_date || !formData.departure_time) {
             setError("Semua kolom formulir harus diisi.");
             return;
         }
@@ -501,6 +505,8 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
                 lat: endPoint.lat,
                 lng: endPoint.lng,
             },
+            departure_date: formData.departure_date,
+            departure_time: formData.departure_time,
         };
 
         try {
@@ -547,10 +553,10 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
             if (token) {
                 axios.defaults.headers.common["X-CSRF-TOKEN"] = token;
             }
-            const response = await axios.post("/loads", payload); // Adjust endpoint as needed
+            const response = await axios.post("/loads", payload);
             alert(response.data.message);
-            setLoadFormData({ weight: "", customer_id: "" }); // Reset form
-            setSelectedRoute(null); // Return to route submission form
+            setLoadFormData({ weight: "", customer_id: "" });
+            setSelectedRoute(null);
         } catch (err) {
             if (err.response?.status === 422) {
                 setFormError(err.response.data.errors);
@@ -561,101 +567,90 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
         }
     };
 
-   const handleRouteClick = (selectedRoute) => {
-    console.log("Route clicked:", selectedRoute);
-    setSelectedRoute(selectedRoute);
-    setRightSidebarOpen(true); // Open sidebar when route is clicked
+    const handleRouteClick = (selectedRoute) => {
+        console.log("Route clicked:", selectedRoute);
+        setSelectedRoute(selectedRoute);
+        setRightSidebarOpen(true);
 
-    if (!mapRef.current || !leafletRef.current) return;
+        if (!mapRef.current || !leafletRef.current) return;
 
-    const L = leafletRef.current;
-    const mapInstance = mapRef.current;
+        const L = leafletRef.current;
+        const mapInstance = mapRef.current;
 
-    // Clear existing map elements - gunakan state yang lama, bukan parameter function
-    if (startPoint?.marker) mapInstance.removeLayer(startPoint.marker);
-    if (endPoint?.marker) mapInstance.removeLayer(endPoint.marker);
-    if (route?.main) mapInstance.removeLayer(route.main); // Gunakan state route yang lama
-    if (route?.animated) mapInstance.removeLayer(route.animated); // Gunakan state route yang lama
-    setStartPoint(null);
-    setEndPoint(null);
-    setRoute(null);
+        if (startPoint?.marker) mapInstance.removeLayer(startPoint.marker);
+        if (endPoint?.marker) mapInstance.removeLayer(endPoint.marker);
+        if (route?.main) mapInstance.removeLayer(route.main);
+        if (route?.animated) mapInstance.removeLayer(route.animated);
+        setStartPoint(null);
+        setEndPoint(null);
+        setRoute(null);
 
-    // Parse the route geometry
-    const geometry = JSON.parse(selectedRoute.geometry);
-    if (geometry.type !== "LineString" || !geometry.coordinates) {
-        setError("Geometri rute tidak valid.");
-        return;
-    }
+        const geometry = JSON.parse(selectedRoute.geometry);
+        if (geometry.type !== "LineString" || !geometry.coordinates) {
+            setError("Geometri rute tidak valid.");
+            return;
+        }
 
-    // Extract start and end coordinates
-    const coordinates = geometry.coordinates;
-    const startCoord = coordinates[0]; // [lng, lat]
-    const endCoord = coordinates[coordinates.length - 1]; // [lng, lat]
+        const coordinates = geometry.coordinates;
+        const startCoord = coordinates[0];
+        const endCoord = coordinates[coordinates.length - 1];
 
-    // Create start and end markers
-    const startIcon = L.divIcon({
-        html: '<div class="custom-marker start-marker"><i class="fas fa-play-circle"></i></div>',
-        className: "",
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-    });
+        const startIcon = L.divIcon({
+            html: '<div class="custom-marker start-marker"><i class="fas fa-play-circle"></i></div>',
+            className: "",
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+        });
 
-    const endIcon = L.divIcon({
-        html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
-        className: "",
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-    });
+        const endIcon = L.divIcon({
+            html: '<div class="custom-marker end-marker"><i class="fas fa-flag-checkered"></i></div>',
+            className: "",
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+        });
 
-    const startMarker = L.marker([startCoord[1], startCoord[0]], {
-        title: "Titik Awal",
-        icon: startIcon,
-    }).addTo(mapInstance);
-    startMarker.bindPopup(`Titik Pengambilan: ${selectedRoute.name}`, { maxWidth: 300 });
+        const startMarker = L.marker([startCoord[1], startCoord[0]], {
+            title: "Titik Awal",
+            icon: startIcon,
+        }).addTo(mapInstance);
+        startMarker.bindPopup(`Titik Pengambilan: ${selectedRoute.name}`, { maxWidth: 300 });
 
-    const endMarker = L.marker([endCoord[1], endCoord[0]], {
-        title: "Titik Akhir",
-        icon: endIcon,
-    }).addTo(mapInstance);
-    endMarker.bindPopup(`Titik Pengantaran: ${selectedRoute.name}`, { maxWidth: 300 });
+        const endMarker = L.marker([endCoord[1], endCoord[0]], {
+            title: "Titik Akhir",
+            icon: endIcon,
+        }).addTo(mapInstance);
+        endMarker.bindPopup(`Titik Pengantaran: ${selectedRoute.name}`, { maxWidth: 300 });
 
-    // Set start and end points for state
-    setStartPoint({ lat: startCoord[1], lng: startCoord[0], marker: startMarker });
-    setEndPoint({ lat: endCoord[1], lng: endCoord[0], marker: endMarker });
+        setStartPoint({ lat: startCoord[1], lng: startCoord[0], marker: startMarker });
+        setEndPoint({ lat: endCoord[1], lng: endCoord[0], marker: endMarker });
 
-    // Draw the route
-    const newRoute = L.geoJSON(geometry, {
-        style: { color: "#3366FF", weight: 6, opacity: 0.7 },
-    }).addTo(mapInstance);
+        const newRoute = L.geoJSON(geometry, {
+            style: { color: "#3366FF", weight: 6, opacity: 0.7 },
+        }).addTo(mapInstance);
 
-    // Add animated route
-    const leafletCoords = coordinates.map((coord) => [coord[1], coord[0]]); // Convert to [lat, lng]
-    const animatedRoute = L.polyline(leafletCoords, {
-        color: "#1e40af",
-        weight: 3,
-        opacity: 0.9,
-        dashArray: "10, 15",
-    }).addTo(mapInstance);
+        const leafletCoords = coordinates.map((coord) => [coord[1], coord[0]]);
+        const animatedRoute = L.polyline(leafletCoords, {
+            color: "#1e40af",
+            weight: 3,
+            opacity: 0.9,
+            dashArray: "10, 15",
+        }).addTo(mapInstance);
 
-    // Animate the dashed line
-    let offset = 0;
-    const animateDash = () => {
-        offset -= 1;
-        animatedRoute.setStyle({ dashOffset: offset });
-        if (mapInstance) requestAnimationFrame(animateDash);
+        let offset = 0;
+        const animateDash = () => {
+            offset -= 1;
+            animatedRoute.setStyle({ dashOffset: offset });
+            if (mapInstance) requestAnimationFrame(animateDash);
+        };
+        animateDash();
+
+        setRoute({ main: newRoute, animated: animatedRoute });
+
+        setDistance(parseFloat(selectedRoute.distance).toFixed(2));
+        setDuration(Math.round(parseFloat(selectedRoute.duration)));
+
+        mapInstance.fitBounds(newRoute.getBounds(), { padding: [50, 50] });
     };
-    animateDash();
-
-    // Update route state
-    setRoute({ main: newRoute, animated: animatedRoute });
-
-    // Set distance and duration from route data
-    setDistance(parseFloat(selectedRoute.distance).toFixed(2));
-    setDuration(Math.round(parseFloat(selectedRoute.duration)));
-
-    // Fit map to route bounds
-    mapInstance.fitBounds(newRoute.getBounds(), { padding: [50, 50] });
-};
 
     const formatDuration = (minutes) => {
         if (!minutes) return "";
@@ -664,9 +659,7 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
         return hours > 0 ? `${hours} jam ${mins} menit` : `${mins} menit`;
     };
 
-    // Calculate current load and available capacity
     const calculateCurrentLoad = (route) => {
-        // Assuming route.loads is an array of load objects with weight_kg
         return route.loads?.reduce((sum, load) => sum + (load.weight_kg || 0), 0) || 0;
     };
 
@@ -769,7 +762,6 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
                                 Tambah Muatan untuk {selectedRoute.name}
                             </h3>
                             <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                                
                                 <div className="font-semibold mb-2">Status Muatan</div>
                                 <div className="flex justify-between mb-2">
                                     <span>Jumlah Muatan Saat Ini</span>
@@ -919,6 +911,46 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
+                                        Tanggal Keberangkatan
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formData.departure_date}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                departure_date: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                    />
+                                    {formError?.departure_date && (
+                                        <div className="error-text">{formError.departure_date[0]}</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Waktu Keberangkatan
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={formData.departure_time}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                departure_time: e.target.value,
+                                            })
+                                        }
+                                        className="input-field"
+                                        required
+                                    />
+                                    {formError?.departure_time && (
+                                        <div className="error-text">{formError.departure_time[0]}</div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
                                         Titik Pengambilan
                                     </label>
                                     <div className="text-sm">
@@ -962,17 +994,17 @@ export default function RouteSubmission({ driver, freights, routes, users,messag
                                         {error}
                                     </div>
                                 )}
-<button
-  type="submit"
-  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex justify-center items-center"
-  disabled={loading || !startPoint || !endPoint || !geometry}
->
-  {loading ? (
-    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-  ) : (
-    "Simpan Rute"
-  )}
-</button>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex justify-center items-center"
+                                    disabled={loading || !startPoint || !endPoint || !geometry}
+                                >
+                                    {loading ? (
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        "Simpan Rute"
+                                    )}
+                                </button>
                             </form>
                         </>
                     )}

@@ -1,6 +1,7 @@
 import { Head } from "@inertiajs/react";
 import { useState, useEffect, useRef } from "react";
 import { Link } from '@inertiajs/react';
+import { format } from 'date-fns';
 
 export default function Dashboard({ logistik }) {
     const [map, setMap] = useState(null);
@@ -190,19 +191,8 @@ export default function Dashboard({ logistik }) {
         const freightPercentage = (freightFilledKg / freightCapacityKg) * 100;
         let discountFactor = 1;
 
-        // Tiered discount based on freight percentage
-        if (freightPercentage <= 50) {
-            discountFactor = 0.95; // 5% discount
-        } else if (freightPercentage <= 75) {
-            discountFactor = 0.85; // 15% discount
-        } else if (freightPercentage <= 90) {
-            discountFactor = 0.75; // 25% discount
-        } else {
-            discountFactor = 0.65; // 35% discount
-        }
-
         // Calculate price per kg with discount
-        const pricePerKg = Math.max(basePricePerKg * discountFactor, basePricePerKg * 0.7);
+        const pricePerKg = basePricePerKg/freightFilledTons
         const totalPrice = (pricePerKg * freightFilledKg).toFixed(0);
 
         return { pricePerKg: pricePerKg.toFixed(0), totalPrice, freightPercentage: freightPercentage.toFixed(2) };
@@ -327,6 +317,7 @@ export default function Dashboard({ logistik }) {
                                 totalPrice,
                                 distance: (routeData.distance / 1000).toFixed(2),
                                 duration: Math.round(routeData.duration / 60),
+                                jadwal: format(new Date(routeData.Jadwal), 'yyyy-MM-dd HH:mm:ss')
                             },
                         });
                         setSidebarOpen(true);
@@ -350,6 +341,7 @@ export default function Dashboard({ logistik }) {
                                 totalPrice,
                                 distance: (routeData.distance / 1000).toFixed(2),
                                 duration: Math.round(routeData.duration / 60),
+                                jadwal:format(new Date(routeData.Jadwal), 'yyyy-MM-dd HH:mm:ss')
                             },
                         });
                         setSidebarOpen(true);
@@ -473,13 +465,18 @@ export default function Dashboard({ logistik }) {
         pricePerKg,
         totalPrice,
         distance,
-        duration
+        duration,
+        jadwal
     ) => {
         const popupDiv = document.createElement("div");
         popupDiv.className = "driver-info-card";
 
         popupDiv.innerHTML = `
             <h3>${title}</h3>
+            <div class="driver-info-item">
+                <div class="driver-info-icon"><i class="fas fa-user"></i></div>
+                <div>Driver: <strong>${jadwal}</strong></div>
+            </div>
             <div class="driver-info-item">
                 <div class="driver-info-icon"><i class="fas fa-user"></i></div>
                 <div>Driver: <strong>${driver}</strong></div>
@@ -661,18 +658,6 @@ export default function Dashboard({ logistik }) {
                                 </div>
                             </div>
 
-                            <div className="mb-4">
-                                <div className="w-full h-32 bg-blue-50 rounded-lg mb-2 flex items-center justify-center">
-                                    <div
-                                        className={`w-16 h-16 rounded-full flex items-center justify-center text-white ${selectedMarker.type === "start" ? "bg-green-500" : "bg-red-500"}`}
-                                    >
-                                        <i
-                                            className={`fas ${selectedMarker.type === "start" ? "fa-play-circle" : "fa-flag-checkered"} text-2xl`}
-                                        ></i>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div className="border-t border-gray-200 pt-4 mt-2">
                                 <h4 className="font-semibold text-gray-700 mb-3">Informasi Driver</h4>
                                 <div className="space-y-3">
@@ -713,7 +698,7 @@ export default function Dashboard({ logistik }) {
                                         <div>
                                             <div className="text-xs text-gray-500">Muatan Terisi</div>
                                             <div className="font-medium">
-                                                {selectedMarker.info.freightFilled} ton ({selectedMarker.info.freightPercentage}%)
+                                                {selectedMarker.info.freightFilled} Kg ({selectedMarker.info.freightPercentage}%)
                                             </div>
                                         </div>
                                     </div>
@@ -754,8 +739,8 @@ export default function Dashboard({ logistik }) {
                                             <i className="fas fa-building"></i>
                                         </div>
                                         <div>
-                                            <div className="text-xs text-gray-500">Perusahaan</div>
-                                            <div className="font-medium">{selectedMarker.info.company}</div>
+                                            <div className="text-xs text-gray-500">Jadwal Kebarangkatan</div>
+                                            <div className="font-medium">{selectedMarker.info.jadwal}</div>
                                         </div>
                                     </div>
 
