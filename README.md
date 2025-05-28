@@ -7,55 +7,97 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+<h1 align="center">PanganMerata</h1>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+![PanganMerata Screenshot](https://drive.google.com/uc?export=view&id=1AqDt_lnWH3ASxKKvFz5QLvPAMLVfJj-p)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+# 🌾 PanganMerata
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**PanganMerata** merupakan platform digital terintegrasi yang dirancang untuk mengatasi ketimpangan informasi distribusi pangan di Indonesia. Website ini menghadirkan dua sistem utama yang saling melengkapi:
 
-## Learning Laravel
+## 🛰️ Sistem Utama
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 1. Sistem Pemantauan Produksi Spasial
+Memantau data produksi beras kuartalan dari tiap provinsi untuk menganalisis tren (naik, turun, atau stabil). Data ini mendukung pengambilan kebijakan pangan jangka menengah dan mendeteksi lonjakan atau penurunan ekstrem produksi untuk intervensi seperti:
+- Subsidi pupuk
+- Dukungan harga
+- Cadangan pangan pemerintah
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 2. Sistem Pengelolaan Logistik Adaptif (Freight Pooling)
+Mengoptimalkan distribusi pangan dengan:
+- Perbaikan rute dan kapasitas kendaraan logistik
+- Kolaborasi antar pemangku kepentingan melalui platform terintegrasi
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-## Laravel Sponsors
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ⚙️ Fitur Utama
 
-### Premium Partners
+- **📈 Analitik Prediktif**: Mendukung pengambilan keputusan logistik dan pasokan berbasis data produksi beras.
+- **🚛 Freight Pooling**: Distribusi yang efisien dan kolaboratif.
+- **🔗 Integrasi Distributor**: Menghubungkan distributor informal ke dalam sistem logistik resmi.
+- **🛒 Konektivitas Pasar**: Membuka akses pasar lebih luas berbasis data, bukan intuisi.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
 
-## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🧰 Teknologi yang Digunakan
 
-## Code of Conduct
+- **Laravel** (Backend)
+- **Supabase** (Database PostgreSQL)
+- **React.js** (Frontend)
+- **OpenStreetMap (OSM)** (Pemetaan)
+- **OSRM** (Open Source Routing Machine untuk rute logistik)
+- **LangChain & Gemini** (AI-based NLP & analitik)
+- **Deployment**:
+  - Backend: Microsoft Azure
+  - Frontend: Vercel
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🚀 Instalasi & Penggunaan
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+⚠️ **CATATAN PENTING:**  
+Jangan jalankan php artisan migrate karena proyek ini **menggunakan Supabase sebagai database utama**.  Seluruh struktur tabel sudah tersedia di Supabase dan tidak perlu migrasi ulang.
 
-## License
+### Langkah-langkah:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. **Clone Repositori**
+   
+```bash
+   git clone https://github.com/ArthaFreestyle/olivia2.git
+   cd olivia2
+```
+
+2. **Install Dependency PHP**
+
+```bash
+   composer install
+   composer update
+```
+
+3. **Install Dependency JavaScript**
+(Gunakan opsi --legacy-peer-deps untuk menghindari konflik versi dependency)
+
+```bash
+   npm install --legacy--peer-deps
+```
+
+4. **Build Asset Frontend**
+
+```bash
+   npm run build
+```
+
+5. **Jalankan Laravel**
+
+```bash
+   php artisan serve
+```
+
+### Catatan Tambahan
+1. File .env sudah tersedia di repository, jadi tidak perlu melakukan konfigurasi manual untuk environment variable.
+2. Pastikan koneksi internet aktif agar integrasi ke Supabase dan layanan pihak ketiga berjalan lancar.
+
+
+### Kontak
+Email: elia21196@gmail.com
+Whatsapp: 085778445682
