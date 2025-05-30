@@ -53,7 +53,11 @@ Mengoptimalkan distribusi pangan dengan:
 
 ## Dokumentasi
 <a href="https://drive.google.com/drive/folders/1igC6fP5oYONSxLnRa8tdRsp5V5Ay8vWX?usp=drive_link">Dokumen</a>
+</br>
 <a href="https://drive.google.com/file/d/1BZGnd3OhrRGa6JDACBpt_QnINbOmHuyw/view?usp=sharing">Video</a>
+</br>
+<a href="https://github.com/ArthaFreestyle/olivia">Production Analysis</a>
+
 
 
 ---
