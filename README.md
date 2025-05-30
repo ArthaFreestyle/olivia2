@@ -52,7 +52,7 @@ Mengoptimalkan distribusi pangan dengan:
   - Frontend: Vercel
 
 ## Dokumentasi
-<a href="https://drive.google.com/drive/folders/1igC6fP5oYONSxLnRa8tdRsp5V5Ay8vWX?usp=drive_link">Dokumen</a>
+<a href="https://drive.google.com/file/d/1eC4iAzKy9VHE8XLqQxq_e74ZCbdVpIy1/view">Dokumen</a>
 </br>
 <a href="https://drive.google.com/file/d/1BZGnd3OhrRGa6JDACBpt_QnINbOmHuyw/view?usp=sharing">Video</a>
 </br>
